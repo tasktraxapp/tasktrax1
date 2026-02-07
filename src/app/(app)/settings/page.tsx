@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
 import { 
     X, Loader2, RefreshCw, Plus, UserPlus, Save, Mail, Lock, BellRing, 
-    UploadCloud, MoreHorizontal, Pencil, Trash2, CheckCircle 
+    UploadCloud, MoreHorizontal, Pencil, Trash2 
 } from "lucide-react";
 import { PermissionsTable } from "./permissions-table"; 
 import type { User } from "@/lib/types";
@@ -461,6 +461,7 @@ export default function SettingsPage() {
                                     <Select value={user.department} onValueChange={(val) => handleDeptChange(user.id, val)}>
                                     <SelectTrigger className="w-[140px] h-8 border-none shadow-none hover:bg-muted/50"><SelectValue placeholder="Select" /></SelectTrigger>
                                     <SelectContent>
+                                        {/* ✅ FIXED: Added closing bracket ')' to map function */}
                                         {departmentOptions.length > 0 ? (
                                             departmentOptions.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)
                                         ) : <SelectItem value="none" disabled>No Depts</SelectItem>}
@@ -553,13 +554,13 @@ export default function SettingsPage() {
                                 <Select value={userToEdit.department} onValueChange={(val) => setUserToEdit({...userToEdit, department: val})}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        {departmentOptions.length > 0 ? departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>) : <SelectItem value="none" disabled>No Depts</SelectItem>}
+                                        {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="grid gap-2">
                                 <Label>Role</Label>
-                                <Select value={userToEdit.role} onValueChange={(val) => setUserToEdit({...userToEdit, role: val})}>
+                                <Select value={userToEdit.role} onValueChange={(val) => setUserToEdit({...userToEdit, role: val as User['role']})}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Admin">Admin</SelectItem>
