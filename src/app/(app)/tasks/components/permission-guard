@@ -1,0 +1,34 @@
+"use client";
+
+import { usePermissions } from "@/hooks/use-permissions";
+import { Loader2 } from "lucide-react";
+import { ReactNode } from "react";
+
+interface PermissionGuardProps {
+  requiredPermission: string; // e.g., "Delete Tasks"
+  children: ReactNode;        // The button or page content to protect
+  fallback?: ReactNode;       // Optional: What to show if access is denied (e.g. "Access Denied" text)
+  showLoader?: boolean;       // Should we show a spinner while checking?
+}
+
+export function PermissionGuard({ 
+  requiredPermission, 
+  children, 
+  fallback = null, // Default is to hide content completely (render nothing)
+  showLoader = false 
+}: PermissionGuardProps) {
+  
+  const { can, loading } = usePermissions();
+
+  if (loading && showLoader) {
+    return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+  }
+
+  // If loading finishes and user CANNOT perform the action -> Show Fallback (or nothing)
+  if (!loading && !can(requiredPermission)) {
+    return <>{fallback}</>;
+  }
+
+  // If user has permission -> Show the actual content
+  return <>{children}</>;
+}

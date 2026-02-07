@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 95%;
+    --foreground: 224 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 10% 10%;
+    --primary: 232 59% 48%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 17% 90%;
+    --secondary-foreground: 224 10% 10%;
+    --muted: 210 17% 90%;
+    --muted-foreground: 224 7% 45%;
+    --accent: 201 71% 83%;
+    --accent-foreground: 232 59% 30%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 100%;
+    --ring: 232 59% 48%;
+    --radius: 0.5rem;
+    --chart-1: 232 59% 48%;
+    --chart-2: 201 71% 83%;
+    --chart-3: 120 40% 50%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 39 96% 50%;
+  }
+
+  .dark {
+    --background: 224 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 224 10% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 224 10% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 201 71% 83%;
+    --primary-foreground: 232 59% 15%;
+    --secondary: 224 10% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 224 10% 12%;
+    --muted-foreground: 224 7% 55%;
+    --accent: 232 59% 48%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 224 10% 12%;
+    --input: 224 10% 12%;
+    --ring: 201 71% 83%;
+    --chart-1: 201 71% 83%;
+    --chart-2: 232 59% 48%;
+    --chart-3: 120 40% 70%;
+    --chart-4: 0 70% 70%;
+    --chart-5: 39 90% 70%;
+  }
+
+  .day-with-task-dot {
+    position: relative;
+  }
+  .day-with-task-dot::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+  }
+  .day-overdue::after {
+    background-color: hsl(var(--chart-4)); /* red */
+  }
+  .day-completed::after {
+    background-color: hsl(var(--chart-1)); /* blue */
+  }
+  .day-in-progress::after {
+    background-color: hsl(var(--chart-3)); /* green */
+  }
+  .day-pending::after {
+    background-color: hsl(var(--chart-5)); /* yellow */
+  }
+  .day-to-hold::after {
+    background-color: hsl(var(--muted-foreground));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none;
+  }
+}
+
+@media print {
+  @page {
+    size: landscape;
+  }
+
+  html, body {
+    height: auto;
+    padding: 0;
+    margin: 0;
+  }
+
+  body {
+    font-size: 10px;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block;
+  }
+  
+  .print-area {
+    /* Try to make the table fit the page */
+    zoom: 0.9;
+    page-break-inside: avoid;
+  }
+
+  .print-area table {
+    width: 100%;
+    table-layout: fixed;
+  }
+  
+  .print-area td,
+  .print-area th {
+    padding: 0.25rem 0.5rem !important;
+    word-wrap: break-word;
+  }
+  
+  /* Ensure the table container doesn't overflow weirdly */
+  .relative.w-full.overflow-auto {
+    overflow: visible !important;
+  }
+
+  .w-\[250px\] {
+    width: auto;
+    white-space: normal;
+  }
+
+  /* Page break handling */
+  table { page-break-inside:auto }
+  tr    { page-break-inside:avoid; page-break-after:auto }
+  thead { display:table-header-group }
+  tfoot { display:table-footer-group }
+}
