@@ -9,7 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; 
-import { X, Loader2, RefreshCw, Plus, UserPlus, Save, Mail, Lock, BellRing, UploadCloud, Send } from "lucide-react";
+import { 
+    X, Loader2, RefreshCw, Plus, UserPlus, Save, Mail, Lock, BellRing, 
+    UploadCloud, MoreHorizontal, Pencil, Trash2, CheckCircle 
+} from "lucide-react";
 import { PermissionsTable } from "./permissions-table"; 
 import type { User } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
@@ -33,11 +36,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 // Firebase
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { updateProfile, sendPasswordResetEmail } from "firebase/auth"; 
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; 
 import { db, auth, storage } from "@/lib/firebase";
@@ -97,6 +108,12 @@ export default function SettingsPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Member', department: '' });
   const [isAddingUser, setIsAddingUser] = useState(false);
+  
+  // Edit / Delete User States
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+
   const [newValues, setNewValues] = useState<Record<string, string>>({});
   const [isInitializing, setIsInitializing] = useState(false);
 
@@ -130,7 +147,37 @@ export default function SettingsPage() {
 
   // --- ACTIONS ---
 
-  // Handle Avatar Upload
+  // ✅ 1. EDIT USER
+  const handleUpdateUser = async () => {
+      if (!userToEdit) return;
+      setIsUpdatingUser(true);
+      try {
+          await updateDoc(doc(db, "users", userToEdit.id), {
+              name: userToEdit.name,
+              department: userToEdit.department,
+              role: userToEdit.role
+          });
+          toast({ title: "User Updated", description: `${userToEdit.name} details saved.` });
+          setUserToEdit(null);
+      } catch (error) {
+          toast({ variant: "destructive", title: "Error", description: "Failed to update user." });
+      } finally {
+          setIsUpdatingUser(false);
+      }
+  };
+
+  // ✅ 2. DELETE USER
+  const handleDeleteUser = async () => {
+      if (!userToDelete) return;
+      try {
+          await deleteDoc(doc(db, "users", userToDelete.id));
+          toast({ title: "User Deleted", description: "The user has been removed." });
+          setUserToDelete(null);
+      } catch (error) {
+          toast({ variant: "destructive", title: "Error", description: "Failed to delete user." });
+      }
+  };
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file || !currentUser) return;
@@ -192,7 +239,6 @@ export default function SettingsPage() {
       }
   };
 
-  // ✅ CURRENT USER PASSWORD RESET
   const handleSendPasswordReset = async () => {
       if (!pEmail) return;
       setIsSendingReset(true);
@@ -206,7 +252,6 @@ export default function SettingsPage() {
       }
   };
 
-  // ✅ OTHER USER PASSWORD RESET (Admin Action)
   const handleUserPasswordReset = async (email: string) => {
       if (!email) return;
       try {
@@ -281,6 +326,7 @@ export default function SettingsPage() {
     setNewValues(prev => ({ ...prev, [field]: value }));
   };
   
+  // Quick inline edits
   const handleRoleChange = async (uid: string, role: string) => {
     await updateDoc(doc(db, "users", uid), { role });
     toast({ title: "Role Updated" });
@@ -315,12 +361,9 @@ export default function SettingsPage() {
                         <CardDescription>Manage your personal information and public avatar.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-8">
-                        
-                        {/* Avatar Section */}
                         <div className="flex flex-col gap-4">
                             <Label>Profile Picture</Label>
                             <div className="flex flex-col sm:flex-row items-start gap-6">
-                                {/* Preview */}
                                 <div className="relative">
                                     <Avatar className="h-28 w-28 border-4 border-muted shrink-0 shadow-sm">
                                         <AvatarImage src={pAvatar} className="object-cover bg-white" />
@@ -332,9 +375,7 @@ export default function SettingsPage() {
                                         </div>
                                     )}
                                 </div>
-                                
                                 <div className="flex flex-col gap-3 w-full">
-                                    {/* Avatar Gallery */}
                                     <div className="space-y-2">
                                         <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quick Select</span>
                                         <div className="flex flex-wrap gap-3">
@@ -345,93 +386,45 @@ export default function SettingsPage() {
                                                     className="h-10 w-10 rounded-full border bg-muted/30 hover:ring-2 ring-primary transition-all overflow-hidden"
                                                     title={`Use ${style} style`}
                                                 >
-                                                    <img 
-                                                        src={`https://api.dicebear.com/7.x/${style}/svg?seed=${pName.replace(/\s/g, '') || "user"}`} 
-                                                        alt={style} 
-                                                        className="h-full w-full object-cover"
-                                                    />
+                                                    <img src={`https://api.dicebear.com/7.x/${style}/svg?seed=${pName.replace(/\s/g, '') || "user"}`} alt={style} className="h-full w-full object-cover" />
                                                 </button>
                                             ))}
-                                            
-                                            <Button variant="outline" size="icon" onClick={generateRandomAvatar} title="Randomize">
-                                                <RefreshCw className="h-4 w-4" />
-                                            </Button>
-
+                                            <Button variant="outline" size="icon" onClick={generateRandomAvatar} title="Randomize"><RefreshCw className="h-4 w-4" /></Button>
                                             <div className="relative">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="icon" 
-                                                    title="Upload Custom Image"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    disabled={isUploadingAvatar}
-                                                >
-                                                    <UploadCloud className="h-4 w-4" />
-                                                </Button>
-                                                <input 
-                                                    type="file" 
-                                                    ref={fileInputRef} 
-                                                    className="hidden" 
-                                                    accept="image/*"
-                                                    onChange={handleAvatarUpload}
-                                                />
+                                                <Button variant="outline" size="icon" title="Upload Custom Image" onClick={() => fileInputRef.current?.click()} disabled={isUploadingAvatar}><UploadCloud className="h-4 w-4" /></Button>
+                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Manual URL Input */}
                                     <div className="space-y-1 pt-2">
                                         <span className="text-xs text-muted-foreground">Or paste a custom URL</span>
-                                        <Input 
-                                            value={pAvatar} 
-                                            onChange={(e) => setPAvatar(e.target.value)} 
-                                            placeholder="https://..." 
-                                            className="h-9 text-xs font-mono"
-                                        />
+                                        <Input value={pAvatar} onChange={(e) => setPAvatar(e.target.value)} placeholder="https://..." className="h-9 text-xs font-mono" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                         <Separator />
-
-                        {/* Details Section */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label>Full Name</Label>
-                                <Input value={pName} onChange={(e) => setPName(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="flex items-center gap-2"><Mail className="h-3 w-3" /> Email Address</Label>
-                                <Input value={pEmail} disabled className="bg-muted/50 cursor-not-allowed" />
-                                <p className="text-[10px] text-muted-foreground">Email cannot be changed directly.</p>
-                            </div>
+                            <div className="space-y-2"><Label>Full Name</Label><Input value={pName} onChange={(e) => setPName(e.target.value)} /></div>
+                            <div className="space-y-2"><Label className="flex items-center gap-2"><Mail className="h-3 w-3" /> Email Address</Label><Input value={pEmail} disabled className="bg-muted/50 cursor-not-allowed" /><p className="text-[10px] text-muted-foreground">Email cannot be changed directly.</p></div>
                             <div className="space-y-2">
                                 <Label>Department</Label>
                                 <Select value={pDept} onValueChange={setPDept}>
                                     <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
-                                    <SelectContent>
-                                        {departmentOptions.length > 0 ? (
-                                            departmentOptions.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)
-                                        ) : <SelectItem value="none" disabled>No Departments Configured</SelectItem>}
-                                    </SelectContent>
+                                    <SelectContent>{departmentOptions.length > 0 ? (departmentOptions.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)) : <SelectItem value="none" disabled>No Departments</SelectItem>}</SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label>System Role</Label>
-                                <div className="flex items-center h-10 px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
-                                    <Lock className="mr-2 h-3 w-3" />
-                                    {currentUser?.role || "Member"}
-                                </div>
+                                <div className="flex items-center h-10 px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground"><Lock className="mr-2 h-3 w-3" />{currentUser?.role || "Member"}</div>
                             </div>
                         </div>
-
                         <div className="flex justify-end pt-4">
                             <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="w-full sm:w-auto min-w-[150px]">
                                 {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 {isSavingProfile ? "Saving..." : "Save Changes"}
                             </Button>
                         </div>
-
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -452,7 +445,7 @@ export default function SettingsPage() {
                             <TableHead>Email</TableHead>
                             <TableHead>Department</TableHead>
                             <TableHead>Role</TableHead>
-                            <TableHead></TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -466,7 +459,7 @@ export default function SettingsPage() {
                                 <TableCell className="text-muted-foreground text-sm">{user.email}</TableCell>
                                 <TableCell>
                                     <Select value={user.department} onValueChange={(val) => handleDeptChange(user.id, val)}>
-                                    <SelectTrigger className="w-[140px] h-8"><SelectValue placeholder="Select" /></SelectTrigger>
+                                    <SelectTrigger className="w-[140px] h-8 border-none shadow-none hover:bg-muted/50"><SelectValue placeholder="Select" /></SelectTrigger>
                                     <SelectContent>
                                         {departmentOptions.length > 0 ? (
                                             departmentOptions.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)
@@ -476,7 +469,7 @@ export default function SettingsPage() {
                                 </TableCell>
                                 <TableCell>
                                     <Select value={user.role} onValueChange={(val) => handleRoleChange(user.id, val)}>
-                                    <SelectTrigger className="w-[120px] h-8"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className="w-[120px] h-8 border-none shadow-none hover:bg-muted/50"><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Admin">Admin</SelectItem>
                                         <SelectItem value="Manager">Manager</SelectItem>
@@ -485,16 +478,23 @@ export default function SettingsPage() {
                                     </Select>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="h-8 text-xs">Reset Pwd</Button></AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader><AlertDialogTitle>Reset Password</AlertDialogTitle><AlertDialogDescription>Send a password reset link to {user.email}?</AlertDialogDescription></AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleUserPasswordReset(user.email)}>Send</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => setUserToEdit(user)}>
+                                                <Pencil className="mr-2 h-4 w-4" /> Edit Details
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleUserPasswordReset(user.email)}>
+                                                <RefreshCw className="mr-2 h-4 w-4" /> Reset Password
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={() => setUserToDelete(user)} className="text-red-600 focus:text-red-600">
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                                 </TableRow>
                             ))
@@ -536,6 +536,65 @@ export default function SettingsPage() {
                 </CardFooter>
             </Card>
             
+            {/* EDIT DIALOG */}
+            <Dialog open={!!userToEdit} onOpenChange={(open) => !open && setUserToEdit(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit User</DialogTitle>
+                    </DialogHeader>
+                    {userToEdit && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label>Full Name</Label>
+                                <Input value={userToEdit.name} onChange={(e) => setUserToEdit({...userToEdit, name: e.target.value})} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Department</Label>
+                                <Select value={userToEdit.department} onValueChange={(val) => setUserToEdit({...userToEdit, department: val})}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {departmentOptions.length > 0 ? departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>) : <SelectItem value="none" disabled>No Depts</SelectItem>}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Role</Label>
+                                <Select value={userToEdit.role} onValueChange={(val) => setUserToEdit({...userToEdit, role: val})}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Admin">Admin</SelectItem>
+                                        <SelectItem value="Manager">Manager</SelectItem>
+                                        <SelectItem value="Member">Member</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button onClick={handleUpdateUser} disabled={isUpdatingUser}>
+                            {isUpdatingUser && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* DELETE CONFIRMATION */}
+            <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete <strong>{userToDelete?.name}</strong> from the system. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <div className="overflow-x-auto">
                 <PermissionsTable />
             </div>
