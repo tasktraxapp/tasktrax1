@@ -26,6 +26,7 @@ import { AddTaskSheet } from "./add-task-sheet"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import type { Task } from "@/lib/types"
+import { usePermissions } from "@/hooks/use-permissions"
 
 // ✅ Import DB Action
 import { deleteTask } from "@/lib/db/tasks"
@@ -40,7 +41,8 @@ export function DataTableRowActions<TData>({
   const task = row.original as Task
   const router = useRouter();
   const { toast } = useToast();
-  
+  const { can } = usePermissions();
+
   // Controls for Modals
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -52,20 +54,20 @@ export function DataTableRowActions<TData>({
 
   const handleDelete = async () => {
     try {
-        await deleteTask(task.id);
-        toast({
-          title: "Task Deleted",
-          description: `Task "${task.title}" has been deleted.`,
-          variant: "destructive",
-        });
-        setShowDeleteDialog(false);
+      await deleteTask(task.id);
+      toast({
+        title: "Task Deleted",
+        description: `Task "${task.title}" has been deleted.`,
+        variant: "destructive",
+      });
+      setShowDeleteDialog(false);
     } catch (error) {
-        console.error("Failed to delete task:", error);
-        toast({
-            title: "Error",
-            description: "Could not delete task. Please try again.",
-            variant: "destructive",
-        });
+      console.error("Failed to delete task:", error);
+      toast({
+        title: "Error",
+        description: "Could not delete task. Please try again.",
+        variant: "destructive",
+      });
     }
   }
 
@@ -73,22 +75,22 @@ export function DataTableRowActions<TData>({
     <>
       {/* 1. EDIT SHEET (Controlled) */}
       <AddTaskSheet task={task} open={showEditSheet} onOpenChange={setShowEditSheet} />
-      
+
       {/* 2. DELETE ALERT (Controlled) */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the task <span className="font-bold text-foreground">"{task.title}"</span>.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                    Delete
-                </AlertDialogAction>
-            </AlertDialogFooter>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the task <span className="font-bold text-foreground">"{task.title}"</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -102,33 +104,37 @@ export function DataTableRowActions<TData>({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          
+
           <DropdownMenuItem onClick={handleCopyId}>
             <Copy className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
             Copy ID
           </DropdownMenuItem>
-          
+
           <DropdownMenuItem onClick={() => router.push(`/tasks/${task.id}`)}>
             <Eye className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
             View Details
           </DropdownMenuItem>
-          
-          <DropdownMenuItem onClick={() => setShowEditSheet(true)}>
-            <Pencil className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-            Edit Task
-          </DropdownMenuItem>
+
+          {can("Edit Tasks") && (
+            <DropdownMenuItem onClick={() => setShowEditSheet(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+              Edit Task
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem onClick={() => window.print()}>
             <Printer className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
             Print
           </DropdownMenuItem>
-          
+
           <DropdownMenuSeparator />
-          
-          <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive focus:text-destructive">
-            <Trash2 className="mr-2 h-3.5 w-3.5" />
-            Delete
-          </DropdownMenuItem>
+
+          {can("Delete Tasks") && (
+            <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Delete
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

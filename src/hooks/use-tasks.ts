@@ -17,9 +17,9 @@ export function useRealtimeTasks() {
     if (authLoading) return;
 
     if (!user || !canView) {
-        setTasks([]);
-        setLoading(false);
-        return;
+      setTasks([]);
+      setLoading(false);
+      return;
     }
 
     const q = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'));
@@ -30,13 +30,13 @@ export function useRealtimeTasks() {
 
         // 🛠️ HELPER: Convert Firestore Timestamp to ISO String
         const safeDate = (val: any) => {
-            if (!val) return undefined;
-            // If it's a Firestore Timestamp (has toDate function)
-            if (typeof val.toDate === 'function') return val.toDate().toISOString();
-            // If it's already a Date
-            if (val instanceof Date) return val.toISOString();
-            // If it's a string, return as is
-            return val;
+          if (!val) return undefined;
+          // If it's a Firestore Timestamp (has toDate function)
+          if (typeof val.toDate === 'function') return val.toDate().toISOString();
+          // If it's already a Date
+          if (val instanceof Date) return val.toISOString();
+          // If it's a string, return as is
+          return val;
         };
 
         return {
@@ -46,7 +46,7 @@ export function useRealtimeTasks() {
           dueDate: safeDate(data.dueDate),
           receivedDate: safeDate(data.receivedDate),
           entryDate: safeDate(data.entryDate),
-          
+
           // ✅ FIX 2: Ensure Period is a string
           period: data.period || "",
 
@@ -61,8 +61,25 @@ export function useRealtimeTasks() {
       const role = (user.role as string) || "";
       let filteredTasks = allTasks;
 
-      if (role !== 'Admin' && role !== 'Manager' && role !== 'admin') {
-          filteredTasks = allTasks.filter(t => t.assignee?.id === user.id);
+      console.log("DEBUG: useRealtimeTasks", {
+        userId: user.id,
+        role,
+        totalTasks: allTasks.length,
+        sampleTask: allTasks[0]
+      });
+
+      // ✅ SECURITY FIX: Block by default! 
+      // Only Admins and Managers can see everything. 
+      // Everyone else (Member, member, User, null, etc.) gets filtered.
+      const isPrivileged = ['Admin', 'Manager', 'admin', 'manager'].includes(role);
+
+      if (!isPrivileged) {
+        filteredTasks = allTasks.filter(t => {
+          const isAssignee = t.assignee?.id === user.id;
+          const isCreator = t.creatorId === user.id;
+          const isViewer = (t.viewers || []).some(v => v.id === user.id);
+          return isAssignee || isCreator || isViewer;
+        });
       }
 
       setTasks(filteredTasks);

@@ -1,16 +1,16 @@
 import { db } from "@/lib/firebase";
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
+import {
+  collection,
+  getDocs,
+  addDoc,
   setDoc,
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy, 
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
   arrayUnion,
-  Timestamp 
+  Timestamp
 } from "firebase/firestore";
 import type { Task, Activity, User } from "@/lib/types";
 
@@ -80,7 +80,7 @@ export async function getTasks(): Promise<Task[]> {
       dueDate: safeIso(data.dueDate),
       receivedDate: safeIso(data.receivedDate),
       entryDate: safeIso(data.entryDate),
-      createdAt: safeIso(rawCreated), 
+      createdAt: safeIso(rawCreated),
       updatedAt: safeIso(data.updatedAt),
       activity: data.activity || [],
       files: data.files || [],
@@ -88,6 +88,10 @@ export async function getTasks(): Promise<Task[]> {
       initialDemand: Number(data.initialDemand || 0),
       officialSettlement: Number(data.officialSettlement || 0),
       motivation: Number(data.motivation || 0),
+
+      // ✅ NEW: Visibility
+      viewers: data.viewers || [],
+      creatorId: data.creatorId,
     } as Task;
   });
 }
@@ -102,11 +106,15 @@ export async function addTask(taskData: Partial<Task>, customId?: string) {
   const payload = cleanPayload({
     ...taskData,
     status: taskData.status || "Pending",
-    
+
     // Financial Conversions
     initialDemand: sanitizeNumber(taskData.initialDemand),
     officialSettlement: sanitizeNumber(taskData.officialSettlement),
     motivation: sanitizeNumber(taskData.motivation),
+
+    // ✅ NEW: Visibility
+    viewers: taskData.viewers || [],
+    creatorId: taskData.creatorId,
 
     dueDate: dateToTimestamp(taskData.dueDate),
     entryDate: Timestamp.now(),
@@ -114,7 +122,7 @@ export async function addTask(taskData: Partial<Task>, customId?: string) {
     activity: [],
     files: []
   });
-  
+
   if (customId) {
     await setDoc(doc(db, "tasks", customId), payload);
   } else {
@@ -128,30 +136,33 @@ export async function addTask(taskData: Partial<Task>, customId?: string) {
 export async function updateTask(taskId: string, taskData: Partial<Task>, user?: User) {
   const taskRef = doc(db, "tasks", taskId);
   const rawPayload: any = { ...taskData };
-  
+
   // Handle Dates
   if (taskData.dueDate) rawPayload.dueDate = Timestamp.fromDate(new Date(taskData.dueDate));
   if (taskData.receivedDate) rawPayload.receivedDate = Timestamp.fromDate(new Date(taskData.receivedDate));
-  
+
   // ✅ FORCE NUMBERS ON UPDATE
   if (taskData.initialDemand !== undefined) rawPayload.initialDemand = sanitizeNumber(taskData.initialDemand);
   if (taskData.officialSettlement !== undefined) rawPayload.officialSettlement = sanitizeNumber(taskData.officialSettlement);
   if (taskData.motivation !== undefined) rawPayload.motivation = sanitizeNumber(taskData.motivation);
 
+  // ✅ NEW: Visibility
+  if (taskData.viewers !== undefined) rawPayload.viewers = taskData.viewers;
+
   // Cleanup
   delete rawPayload.id;
-  delete rawPayload.createdAt; 
-  delete rawPayload.entryDate; 
-  delete rawPayload.activity; 
+  delete rawPayload.createdAt;
+  delete rawPayload.entryDate;
+  delete rawPayload.activity;
 
   rawPayload.updatedAt = Timestamp.now();
 
   if (user) {
     const activityLog: Activity = {
-        id: `act-${Date.now()}`,
-        user: user,
-        action: 'updated task details',
-        timestamp: new Date().toISOString()
+      id: `act-${Date.now()}`,
+      user: user,
+      action: 'updated task details',
+      timestamp: new Date().toISOString()
     };
     rawPayload.activity = arrayUnion(cleanPayload(activityLog));
   }
@@ -163,16 +174,16 @@ export async function updateTask(taskId: string, taskData: Partial<Task>, user?:
 // Status Update
 export async function updateTaskStatus(taskId: string, newStatus: string) {
   const taskRef = doc(db, "tasks", taskId);
-  await updateDoc(taskRef, { 
+  await updateDoc(taskRef, {
     status: newStatus,
-    updatedAt: Timestamp.now() 
+    updatedAt: Timestamp.now()
   });
 }
 
 // Files Update
 export async function updateTaskFiles(taskId: string, files: any[]) {
   const taskRef = doc(db, "tasks", taskId);
-  await updateDoc(taskRef, { 
+  await updateDoc(taskRef, {
     files: files,
     updatedAt: Timestamp.now()
   });

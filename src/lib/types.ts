@@ -12,7 +12,7 @@ export interface User {
   email: string;
   role: Role;
   avatarUrl?: string;
-  fcmToken?: string; 
+  fcmToken?: string;
   department?: string;
 }
 
@@ -23,13 +23,13 @@ export interface PermissionRule {
   permission: string;
   admin: boolean;
   manager: boolean;
-  member: boolean;    
+  member: boolean;
 }
 
 export interface AppSettings {
   id?: string;
   customFields?: { [key: string]: string[] };
-  rules?: PermissionRule[]; 
+  rules?: PermissionRule[];
   permissions?: { [action: string]: boolean };
 }
 
@@ -55,17 +55,22 @@ export interface Task {
   priority: "Low" | "Medium" | "High" | "Urgent";
   assignee: User;
   description?: string;
-  
+
   dueDate?: string | Date;
   entryDate?: string | Date;
   receivedDate?: string | Date;
-  
-  department?: string;
+
+  department?: string[];
   sender?: string;
   senderLocation?: string;
   receiver?: string;
   receiverLocation?: string;
   period?: string;
+
+  // ✅ NEW: Visibility Fields
+  viewers?: User[]; // Array of User Objects
+  creatorId?: string; // ID of the user who created the task
+
 
   // ✅ UNIFIED FIX: Strict 'number' type.
   // We will force the conversion in the Hook, so Pages don't have to worry.
