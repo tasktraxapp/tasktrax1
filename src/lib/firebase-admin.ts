@@ -21,15 +21,32 @@ try {
     serviceAccount = {};
 }
 
+
+// Initialize safely
 if (!getApps().length) {
     try {
-        initializeApp({
-            credential: cert(serviceAccount),
-        });
-        console.log("✅ Firebase Admin Initialized.");
+        if (serviceAccount.project_id) {
+            initializeApp({
+                credential: cert(serviceAccount),
+            });
+            console.log("✅ Firebase Admin Initialized.");
+        } else {
+            // Warn but don't crash - allows build to succeed
+            console.warn("⚠️ Firebase Admin Initialization Skipped: Invalid or missing service account key.");
+        }
     } catch (error) {
         console.error("❌ Firebase Admin Initialization Failed:", error);
     }
 }
 
-export const adminAuth = getAuth();
+// Export Auth safely - will be null if init failed
+let adminAuth: any = null;
+try {
+    if (getApps().length) {
+        adminAuth = getAuth();
+    }
+} catch (e) {
+    console.error("⚠️ Failed to retrieve Admin Auth instance (this is expected during build if key is missing).");
+}
+
+export { adminAuth };

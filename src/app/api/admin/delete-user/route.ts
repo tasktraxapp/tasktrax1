@@ -13,6 +13,12 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
+        // ✅ Check if Admin SDK is initialized
+        if (!adminAuth) {
+            console.error("[API] Admin SDK not initialized. Check server logs/env vars.");
+            return NextResponse.json({ error: 'Server configuration error: Admin SDK not available.' }, { status: 503 });
+        }
+
         // Verify the request is authorized (optional: check for an admin token here)
 
         await adminAuth.deleteUser(uid);
