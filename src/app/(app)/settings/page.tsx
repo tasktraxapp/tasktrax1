@@ -352,7 +352,6 @@ export default function SettingsPage() {
                     {(can("Manage Users") || can("Manage Team")) && <TabsTrigger value="users">Users & Roles</TabsTrigger>}
                     {can("Manage Settings") && <TabsTrigger value="fields">Custom Fields</TabsTrigger>}
                     <TabsTrigger value="notifications">Notifications</TabsTrigger>
-                    {currentUser?.role === 'Admin' && <TabsTrigger value="logins">Logins</TabsTrigger>}
                     <TabsTrigger value="security" className="col-span-2 sm:col-span-1">Security</TabsTrigger>
                 </TabsList>
 
