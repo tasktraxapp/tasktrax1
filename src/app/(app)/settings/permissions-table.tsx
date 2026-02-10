@@ -11,14 +11,24 @@ import { useAppSettings } from "@/hooks/use-settings";
 import { PermissionRule } from "@/lib/types";
 
 // ✅ 1. DEFINE DEFAULT RULES (Fallback if DB is empty)
+const PERMISSION_ORDER = [
+    "Create Tasks",
+    "View Tasks",
+    "Edit Tasks",
+    "Delete Tasks",
+    "View Financials",
+    "Manage Users",
+    "Manage Settings"
+];
+
 const DEFAULT_RULES: PermissionRule[] = [
-    { permission: "View Tasks", admin: true, manager: true, member: true },
     { permission: "Create Tasks", admin: true, manager: true, member: true },
+    { permission: "View Tasks", admin: true, manager: true, member: true },
     { permission: "Edit Tasks", admin: true, manager: true, member: false },
     { permission: "Delete Tasks", admin: true, manager: false, member: false },
+    { permission: "View Financials", admin: true, manager: true, member: false },
     { permission: "Manage Users", admin: true, manager: false, member: false },
     { permission: "Manage Settings", admin: true, manager: false, member: false },
-    { permission: "View Financials", admin: true, manager: true, member: false },
 ];
 
 export function PermissionsTable() {
@@ -30,8 +40,14 @@ export function PermissionsTable() {
         ? settings.rules
         : DEFAULT_RULES;
 
-    // Sort alphabetically for consistency
-    const sortedRules = [...displayRules].sort((a, b) => a.permission.localeCompare(b.permission));
+    // Sort by defined order & Filter strictly
+    const sortedRules = [...displayRules]
+        .filter(r => PERMISSION_ORDER.includes(r.permission))
+        .sort((a, b) => {
+            const indexA = PERMISSION_ORDER.indexOf(a.permission);
+            const indexB = PERMISSION_ORDER.indexOf(b.permission);
+            return indexA - indexB;
+        });
 
     const handlePermissionChange = async (
         permissionName: string,

@@ -49,14 +49,7 @@ export default function AppLayout({
         }
     }, [user, authLoading, router]);
 
-    // ✅ SHOW LOADER
-    if (authLoading) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center bg-background">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
+
 
     // ✅ 1. ADD STATE FOR MOBILE MENU
     const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -130,6 +123,15 @@ export default function AppLayout({
         { href: '/financials', icon: Wallet, label: 'Financials', permission: 'View Tasks' },
         { href: '/documents', icon: FileText, label: 'Documents', permission: 'View Tasks' },
     ];
+
+    // ✅ SHOW LOADER (Moved after all hooks)
+    if (authLoading) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-background">
