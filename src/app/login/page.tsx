@@ -252,11 +252,11 @@ export default function LoginPage() {
                     <div className="mb-10 transform transition-transform hover:scale-105 duration-500">
                         <Logo
                             urlOverride={LOGO_FOR_DARK_SIDEBAR}
-                            iconClassName="!h-32 !w-auto drop-shadow-2xl"
+                            iconClassName="!h-40 !w-auto drop-shadow-2xl"
                         />
                     </div>
 
-                    <h2 className="text-3xl xl:text-4xl font-bold text-white mb-6 tracking-tight">Task Management, Redefined</h2>
+                    <h2 className="text-3xl xl:text-4xl font-semibold text-white mb-6 tracking-tight">Task Management, Redefined</h2>
                     <p className="text-lg text-blue-100/80 font-light leading-relaxed">
                         Streamline your workflow, manage tasks efficiently, and achieve your goals with TaskTrax.
                     </p>
