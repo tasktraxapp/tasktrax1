@@ -34,13 +34,13 @@ export const generateWordDoc = (tasks: Task[], filename: string = 'task_report.d
         <title>Task Detail View</title>
         <style>
             @page { size: A4; margin: 0.5in; }
-            body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.0; }
-            p { margin: 0; padding: 0; }
+            body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.0; mso-line-height-rule: exactly; }
+            p { margin: 0; padding: 0; mso-margin-top-alt:0cm; mso-margin-bottom-alt:0cm; }
             .report-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
             .meta { font-size: 10px; color: #555; margin-bottom: 10px; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 0; border: 1px solid #000; page-break-inside: avoid; }
-            th { background-color: #4f81bd; color: white; font-weight: bold; text-align: left; padding: 4px 8px; font-size: 12px; border: 1px solid #000; }
-            td { border: 1px solid #000; padding: 3px 8px; font-size: 11px; vertical-align: middle; }
+            th { background-color: #4f81bd; color: white; font-weight: bold; text-align: left; padding: 4px 8px; font-size: 11pt; border: 1px solid #000; }
+            td { border: 1px solid #000; padding: 3px 8px; font-size: 11pt; vertical-align: middle; }
             .label-col { width: 25%; background-color: #f2f2f2; font-weight: bold; color: #000; }
         </style>
     </head>
@@ -102,11 +102,11 @@ export const generateFinancialsWordDoc = (tasks: Task[], filename: string = 'fin
         <title>Financials Report</title>
         <style>
             @page { size: landscape; margin: 0.5in; }
-            body { font-family: Arial, sans-serif; font-size: 11pt; }
-            p { margin: 0; padding: 0; }
+            body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.0; mso-line-height-rule: exactly; }
+            p { margin: 0; padding: 0; mso-margin-top-alt:0cm; mso-margin-bottom-alt:0cm; }
             table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
-            th { background-color: #4f81bd; color: white; border: 1px solid #000; padding: 5px; font-size: 11px; }
-            td { border: 1px solid #000; padding: 5px; font-size: 11px; }
+            th { background-color: #4f81bd; color: white; border: 1px solid #000; padding: 5px; font-size: 11pt; }
+            td { border: 1px solid #000; padding: 5px; font-size: 11pt; }
             .currency { text-align: right; white-space: nowrap; }
             .header { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
             .meta { font-size: 10px; color: #666; margin-bottom: 10px; }

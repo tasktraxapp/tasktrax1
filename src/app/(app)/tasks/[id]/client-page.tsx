@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { format, formatDistanceToNow, isValid } from "date-fns";
-import { ArrowLeft, File as FileIcon, Pencil, Download, Printer, FileText, Trash2, MoreVertical, Eye, Plus, Loader2, Send } from "lucide-react";
+import { ArrowLeft, File as FileIcon, Pencil, Download, Printer, FileText, Trash2, MoreHorizontal, Eye, Plus, Loader2, Send } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { AddTaskSheet } from "../components/add-task-sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -370,12 +370,12 @@ export default function TaskDetailClient({ id }: { id: string }) {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" size="icon" className="h-9 w-9">
-                                            <MoreVertical className="h-4 w-4" />
+                                            <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <PermissionGuard requiredPermission="Edit Tasks">
-                                            <DropdownMenuItem onClick={() => setIsSheetOpen(true)} className="md:hidden">
+                                            <DropdownMenuItem onClick={() => setIsSheetOpen(true)} className="md:hidden text-blue-600 focus:text-blue-600 font-medium">
                                                 Edit Task
                                             </DropdownMenuItem>
                                         </PermissionGuard>
