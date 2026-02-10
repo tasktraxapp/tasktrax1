@@ -60,6 +60,7 @@ import { useAppSettings } from "@/hooks/use-settings";
 import { useAuth } from "@/context/auth-context";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PermissionGuard } from "@/components/permission-guard";
+import { useRealtimeLogins } from "@/hooks/use-logins"; // ✅ Import Hook
 import Cropper from "react-easy-crop";
 import { getCroppedImg } from "@/lib/canvasUtils";
 import { Slider } from "@/components/ui/slider";
@@ -145,6 +146,9 @@ export default function SettingsPage() {
         });
         return () => unsubscribe();
     }, []);
+
+    // 3. Sync Login History (Admin Only)
+    const { logins, loading: loginsLoading } = useRealtimeLogins(); // ✅ Fetch Logins
 
     // 2. Sync Current User Profile Data
     useEffect(() => {
@@ -412,8 +416,9 @@ export default function SettingsPage() {
                     <TabsTrigger value="profile">Profile</TabsTrigger>
                     {(can("Manage Users") || can("Manage Team")) && <TabsTrigger value="users">Users & Roles</TabsTrigger>}
                     {can("Manage Settings") && <TabsTrigger value="fields">Custom Fields</TabsTrigger>}
+
                     <TabsTrigger value="notifications">Notifications</TabsTrigger>
-                    <TabsTrigger value="security" className="col-span-2 sm:col-span-1">Security</TabsTrigger>
+                    <TabsTrigger value="security" className="col-span-2 sm:col-span-1">Security & Logins</TabsTrigger>
                 </TabsList>
 
                 <div className="mt-4 space-y-4">
@@ -757,6 +762,9 @@ export default function SettingsPage() {
                         </Card>
                     </TabsContent>
 
+                    {/* --- TAB: LOGIN HISTORY (ADMIN) --- */}
+
+
                     {/* --- TAB 4: NOTIFICATIONS --- */}
                     <TabsContent value="notifications">
                         <Card>
@@ -817,6 +825,52 @@ export default function SettingsPage() {
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {/* Login History (Admin Only) */}
+                        {(can("Manage Users") || currentUser?.role === 'Admin') && (
+                            <Card className="mt-6">
+                                <CardHeader>
+                                    <CardTitle>Login History</CardTitle>
+                                    <CardDescription>Recent login activity (Last 100 records).</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>User</TableHead>
+                                                    <TableHead>Time</TableHead>
+                                                    <TableHead>IP Address</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {loginsLoading ? (
+                                                    <TableRow><TableCell colSpan={3} className="text-center h-24"><Loader2 className="animate-spin h-6 w-6 mx-auto" /></TableCell></TableRow>
+                                                ) : logins.length > 0 ? (
+                                                    logins.map(login => (
+                                                        <TableRow key={login.id}>
+                                                            <TableCell className="font-medium flex items-center gap-2">
+                                                                <Avatar className="h-6 w-6">
+                                                                    <AvatarImage src={login.userAvatar} />
+                                                                    <AvatarFallback>{login.userName?.charAt(0) || "?"}</AvatarFallback>
+                                                                </Avatar>
+                                                                {login.userName}
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground">
+                                                                {isValid(login.timestamp) ? format(login.timestamp, "PPpp") : "N/A"}
+                                                            </TableCell>
+                                                            <TableCell className="font-mono text-xs">{login.ip || "—"}</TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                ) : (
+                                                    <TableRow><TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No login history found.</TableCell></TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
                     </TabsContent>
                 </div>
             </Tabs>

@@ -7,7 +7,7 @@ export interface LoginEvent {
   userId: string;
   userName: string;
   userAvatar?: string;
-  timestamp: any; 
+  timestamp: any;
   ip?: string;
 }
 
@@ -18,24 +18,37 @@ export function useRealtimeLogins() {
   useEffect(() => {
     // 1. SIMPLE QUERY: No 'orderBy' to prevent Index Errors
     const q = query(
-        collection(db, 'logins'), 
-        limit(20) // Fetch last 20, we sort them below
+      collection(db, 'logins'),
+      limit(100) // Fetch last 100
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as LoginEvent[];
+      const data = snapshot.docs.map((doc) => {
+        const d = doc.data();
+        let parsedDate = new Date(); // Fallback
 
-      // 2. CLIENT-SIDE SORT: Fixes "Missing Index" issues
+        // Handle various timestamp formats
+        if (d.timestamp?.toDate) {
+          parsedDate = d.timestamp.toDate();
+        } else if (d.timestamp?.seconds) {
+          parsedDate = new Date(d.timestamp.seconds * 1000);
+        } else if (typeof d.timestamp === 'string') {
+          parsedDate = new Date(d.timestamp);
+        }
+
+        return {
+          id: doc.id,
+          ...d,
+          timestamp: parsedDate // Normalize to JS Date
+        };
+      }) as LoginEvent[];
+
+      // 2. CLIENT-SIDE SORT
       const sortedData = data.sort((a, b) => {
-          const tA = a.timestamp?.seconds || 0;
-          const tB = b.timestamp?.seconds || 0;
-          return tB - tA; // Newest first
+        return (b.timestamp as any) - (a.timestamp as any); // Newest first
       });
 
-      setLogins(sortedData.slice(0, 5)); // Keep top 5
+      setLogins(sortedData);
       setLoading(false);
     }, (error) => {
       console.error("Login Sync Error:", error);
