@@ -60,6 +60,9 @@ import { useAppSettings } from "@/hooks/use-settings";
 import { useAuth } from "@/context/auth-context";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PermissionGuard } from "@/components/permission-guard";
+import Cropper from "react-easy-crop";
+import { getCroppedImg } from "@/lib/canvasUtils";
+import { Slider } from "@/components/ui/slider";
 
 // Avatar Styles for Gallery
 const AVATAR_STYLES = [
@@ -100,6 +103,14 @@ export default function SettingsPage() {
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // -- CROPPER STATE --
+    const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [rotation, setRotation] = useState(0);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [isCropping, setIsCropping] = useState(false);
 
     // -- SECURITY STATE --
     const [isSendingReset, setIsSendingReset] = useState(false);
@@ -174,26 +185,64 @@ export default function SettingsPage() {
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
         try {
+            // First, delete from Firestore
             await deleteDoc(doc(db, "users", userToDelete.id));
-            toast({ title: "User Deleted", description: "The user has been removed." });
+
+            // Second, call API to delete from Authentication
+            const response = await fetch(`/api/admin/delete-user?uid=${userToDelete.id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.warn("Failed to delete from Auth", errorData);
+                toast({
+                    variant: "destructive",
+                    title: "Auth Deletion Failed",
+                    description: errorData.error || "User removed from DB but Auth deletion failed."
+                });
+            } else {
+                toast({ title: "User Deleted", description: "The user has been removed from configured systems." });
+            }
+
             setUserToDelete(null);
         } catch (error) {
+            console.error(error);
             toast({ variant: "destructive", title: "Error", description: "Failed to delete user." });
         }
     };
 
-    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !currentUser) return;
+    const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    };
 
+    const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files.length > 0) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.addEventListener("load", () => {
+                setImageSrc(reader.result?.toString() || "");
+                setIsCropping(true);
+            });
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSaveCroppedImage = async () => {
+        if (!imageSrc || !currentUser) return;
         setIsUploadingAvatar(true);
         try {
-            const fileRef = ref(storage, `avatars/${currentUser.id}_${Date.now()}`);
-            await uploadBytes(fileRef, file);
+            const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+            if (!croppedBlob) throw new Error("Correction failed");
+
+            const fileRef = ref(storage, `avatars/${currentUser.id}_${Date.now()}.jpg`);
+            await uploadBytes(fileRef, croppedBlob);
             const downloadUrl = await getDownloadURL(fileRef);
 
             setPAvatar(downloadUrl);
-            toast({ title: "Avatar Uploaded", description: "Remember to save your changes." });
+            toast({ title: "Avatar Updated", description: "Image cropped and uploaded successfully." });
+            setIsCropping(false);
+            setImageSrc(null);
         } catch (error) {
             console.error("Upload failed", error);
             toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload image." });
@@ -294,7 +343,19 @@ export default function SettingsPage() {
             setIsInviteOpen(false);
             setNewUser({ name: '', email: '', role: 'Member', department: '' });
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            let errorMessage = error.message;
+            let errorTitle = "Error";
+
+            // ✅ Better Error Handling
+            if (error.code === 'auth/email-already-in-use') {
+                errorTitle = "Email Already Registered";
+                errorMessage = "This email is already linked to an account (possibly deleted from the list but active in Auth). Please use a different email.";
+            } else if (error.code === 'auth/invalid-email') {
+                errorTitle = "Invalid Email";
+                errorMessage = "Please enter a valid email address.";
+            }
+
+            toast({ title: errorTitle, description: errorMessage, variant: "destructive" });
         } finally {
             setIsAddingUser(false);
         }
@@ -379,32 +440,65 @@ export default function SettingsPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex flex-col gap-3 w-full">
-                                            <div className="space-y-2">
-                                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quick Select</span>
-                                                <div className="flex flex-wrap gap-3">
-                                                    {AVATAR_STYLES.map((style) => (
-                                                        <button
-                                                            key={style}
-                                                            onClick={() => selectAvatarStyle(style)}
-                                                            className="h-10 w-10 rounded-full border bg-muted/30 hover:ring-2 ring-primary transition-all overflow-hidden"
-                                                            title={`Use ${style} style`}
-                                                        >
-                                                            <img src={`https://api.dicebear.com/7.x/${style}/svg?seed=${pName.replace(/\s/g, '') || "user"}`} alt={style} className="h-full w-full object-cover" />
-                                                        </button>
-                                                    ))}
-                                                    <Button variant="outline" size="icon" onClick={generateRandomAvatar} title="Randomize"><RefreshCw className="h-4 w-4" /></Button>
-                                                    <div className="relative">
-                                                        <Button variant="outline" size="icon" title="Upload Custom Image" onClick={() => fileInputRef.current?.click()} disabled={isUploadingAvatar}><UploadCloud className="h-4 w-4" /></Button>
-                                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
-                                                    </div>
+                                        <div className="flex flex-col gap-3 w-full justify-center">
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploadingAvatar}>
+                                                        <UploadCloud className="mr-2 h-4 w-4" />
+                                                        Change Photo
+                                                    </Button>
+                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
+                                                    <p className="text-sm text-muted-foreground">Upload and crop to fit via popup.</p>
                                                 </div>
                                             </div>
-                                            <div className="space-y-1 pt-2">
-                                                <span className="text-xs text-muted-foreground">Or paste a custom URL</span>
-                                                <Input value={pAvatar} onChange={(e) => setPAvatar(e.target.value)} placeholder="https://..." className="h-9 text-xs font-mono" />
-                                            </div>
                                         </div>
+
+                                        {/* CROP PDIALOG */}
+                                        <Dialog open={isCropping} onOpenChange={setIsCropping}>
+                                            <DialogContent className="sm:max-w-lg">
+                                                <DialogHeader>
+                                                    <DialogTitle>Crop Profile Picture</DialogTitle>
+                                                    <CardDescription>Drag to position and use slider to zoom.</CardDescription>
+                                                </DialogHeader>
+                                                <div className="relative w-full h-64 bg-black/5 rounded-md overflow-hidden mt-4">
+                                                    {imageSrc && (
+                                                        <Cropper
+                                                            image={imageSrc}
+                                                            crop={crop}
+                                                            zoom={zoom}
+                                                            rotation={rotation}
+                                                            aspect={1}
+                                                            onCropChange={setCrop}
+                                                            onCropComplete={onCropComplete}
+                                                            onZoomChange={setZoom}
+                                                            onRotationChange={setRotation}
+                                                            cropShape="round"
+                                                            showGrid={false}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col gap-4 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs w-12 text-muted-foreground">Zoom</span>
+                                                        <Slider
+                                                            defaultValue={[1]}
+                                                            min={1}
+                                                            max={3}
+                                                            step={0.1}
+                                                            value={[zoom]}
+                                                            onValueChange={(val) => setZoom(val[0])}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <DialogFooter>
+                                                    <Button variant="outline" onClick={() => setIsCropping(false)}>Cancel</Button>
+                                                    <Button onClick={handleSaveCroppedImage} disabled={isUploadingAvatar}>
+                                                        {isUploadingAvatar && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                        Save & Upload
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
                                     </div>
                                 </div>
                                 <Separator />

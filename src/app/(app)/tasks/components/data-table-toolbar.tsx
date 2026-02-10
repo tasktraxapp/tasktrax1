@@ -22,35 +22,14 @@ import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { format, isValid } from "date-fns"
 import { mockUsers } from "@/lib/data"
+import { generateWordDoc, formatDateSafe, formatCurrency } from "@/lib/export-utils"
 
 interface DataTableToolbarProps<TData> {
     table: Table<TData>
     showAddTaskButton?: boolean
 }
 
-// 🛠️ HELPER: Safe Date Formatting
-const formatDateSafe = (dateInput: any, formatStr: string = "dd-MM-yyyy") => {
-    if (!dateInput) return 'N/A';
 
-    let date: Date;
-    // Handle Firestore Timestamp
-    if (typeof dateInput === 'object' && dateInput !== null && 'seconds' in dateInput) {
-        date = new Date(dateInput.seconds * 1000);
-    } else {
-        date = new Date(dateInput);
-    }
-
-    return isValid(date) ? format(date, formatStr) : 'N/A';
-};
-
-// 🛠️ HELPER: Currency Formatting
-const formatCurrency = (amount: number, currency = 'USD') => {
-    try {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount);
-    } catch (e) {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    }
-}
 
 const statuses = [
     { value: 'In Progress', label: 'In Progress' },
@@ -154,68 +133,7 @@ export function DataTableToolbar<TData>({
     // --- 2. HANDLE DOWNLOAD WORD ---
     const handleDownloadWord = () => {
         const tasksToExport = getSortedTasks();
-        let htmlContent = `
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-        <head>
-            <meta charset="utf-8">
-            <title>Task Detail View</title>
-            <style>
-                @page { size: A4; margin: 0.5in; }
-                body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.2; }
-                .report-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-                .meta { font-size: 10px; color: #555; margin-bottom: 10px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 15px; border: 1px solid #000; page-break-inside: avoid; }
-                th { background-color: #4f81bd; color: white; font-weight: bold; text-align: left; padding: 4px 8px; font-size: 12px; border: 1px solid #000; }
-                td { border: 1px solid #000; padding: 3px 8px; font-size: 10px; vertical-align: middle; }
-                .label-col { width: 25%; background-color: #f2f2f2; font-weight: bold; color: #000; }
-            </style>
-        </head>
-        <body>
-            <div class="report-title">Task Detail View</div>
-            <div class="meta">Generated: ${format(new Date(), "dd-MM-yyyy HH:mm:ss")}</div>
-    `;
-
-        tasksToExport.forEach((task) => {
-            htmlContent += `
-            <table>
-                <thead>
-                    <tr><th colspan="2">${task.id}: ${task.title}</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td class="label-col">Status</td><td>${task.status || 'Pending'}</td></tr>
-                    <tr><td class="label-col">Priority</td><td>${task.priority || 'Medium'}</td></tr>
-                    <tr><td class="label-col">Label</td><td>${task.label || 'None'}</td></tr>
-                    <tr><td class="label-col">Assignee</td><td>${task.assignee?.name || 'Unassigned'}</td></tr>
-                    <tr><td class="label-col">Sender</td><td>${task.sender || 'N/A'}</td></tr>
-                    <tr><td class="label-col">Sender Location</td><td>${task.senderLocation || 'N/A'}</td></tr>
-                    <tr><td class="label-col">Receiver</td><td>${task.receiver || 'N/A'}</td></tr>
-                    <tr><td class="label-col">Receiver Location</td><td>${task.receiverLocation || 'N/A'}</td></tr>
-                    <tr><td class="label-col">Received Date</td><td>${formatDateSafe(task.receivedDate)}</td></tr>
-                    <tr><td class="label-col">Entry Date</td><td>${formatDateSafe(task.entryDate)}</td></tr>
-                    <tr><td class="label-col">Due Date</td><td>${formatDateSafe(task.dueDate)}</td></tr>
-                    <tr><td class="label-col">Period</td><td>${task.period || 'N/A'}</td></tr>
-                    <tr><td class="label-col">Description</td><td>${task.description || 'N/A'}</td></tr>
-        `;
-
-            if (task.initialDemand || task.officialSettlement || task.motivation) {
-                htmlContent += `
-                <tr><td class="label-col" style="background-color: #dce6f1;">Financials</td><td style="background-color: #dce6f1;"></td></tr>
-                <tr><td class="label-col">Initial Demand</td><td>${formatCurrency(task.initialDemand || 0, task.initialDemandCurrency)}</td></tr>
-                <tr><td class="label-col">Official Settlement</td><td>${formatCurrency(task.officialSettlement || 0, task.officialSettlementCurrency)}</td></tr>
-                <tr><td class="label-col">Motivation</td><td>${formatCurrency(task.motivation || 0, task.motivationCurrency)}</td></tr>
-             `;
-            }
-            htmlContent += `</tbody></table>`;
-        });
-        htmlContent += `</body></html>`;
-
-        const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'task_detail_report.doc';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        generateWordDoc(tasksToExport, 'task_report_full.doc');
     };
 
     // --- 3. HANDLE PRINT DETAILS (Fixed for Android) ---
@@ -337,22 +255,15 @@ export function DataTableToolbar<TData>({
                     />
                 </div>
 
-                {/* FILTER DROPDOWN */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 border-dashed">
-                            <Filter className="mr-2 h-4 w-4" />
-                            Filter
+                        <Button variant="outline" size="icon" className="h-9 w-9">
+                            <Filter className="h-4 w-4" />
+                            <span className="sr-only">Filter</span>
                             {activeFilterCount > 0 && (
-                                <>
-                                    <Separator orientation="vertical" className="mx-2 h-4" />
-                                    <Badge variant="secondary" className="rounded-sm px-1 font-normal lg:hidden">
-                                        {activeFilterCount}
-                                    </Badge>
-                                    <Badge variant="secondary" className="hidden lg:inline-flex rounded-sm px-1 font-normal">
-                                        {activeFilterCount} selected
-                                    </Badge>
-                                </>
+                                <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full flex items-center justify-center text-[10px]">
+                                    {activeFilterCount}
+                                </Badge>
                             )}
                         </Button>
                     </DropdownMenuTrigger>
@@ -443,18 +354,20 @@ export function DataTableToolbar<TData>({
             </div>
 
             {/* ACTIONS (Right Side) */}
+            {/* ACTIONS (Right Side) */}
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Export
+                        <Button variant="outline" size="icon" className="h-9 w-9">
+                            <Upload className="h-4 w-4" />
+                            <span className="sr-only">Export</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleExportCsv}>Export CSV</DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDownloadTxt}>Download TXT </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDownloadWord}>Download Word</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleDownloadTxt}>Download (.txt)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleDownloadWord}>Download (.docx)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleExportCsv}>Export (.csv)    </DropdownMenuItem>
+
                     </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -474,9 +387,9 @@ export function DataTableToolbar<TData>({
                 {showAddTaskButton && (
                     <PermissionGuard requiredPermission="Create Tasks">
                         <AddTaskSheet>
-                            <Button size="sm" className="h-9">
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add
+                            <Button size="icon" className="h-9 w-9">
+                                <PlusCircle className="h-4 w-4" />
+                                <span className="sr-only">Add</span>
                             </Button>
                         </AddTaskSheet>
                     </PermissionGuard>

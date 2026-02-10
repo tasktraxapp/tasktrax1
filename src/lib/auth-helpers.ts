@@ -18,21 +18,21 @@ export async function createSystemUser(userData: Partial<User>) {
   // 1. Initialize a secondary app instance to avoid logging out the Admin
   const secondaryAppName = "secondaryApp";
   let secondaryApp;
-  
+
   if (getApps().some(app => app.name === secondaryAppName)) {
-      secondaryApp = getApp(secondaryAppName);
+    secondaryApp = getApp(secondaryAppName);
   } else {
-      secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+    secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
   }
 
   const secondaryAuth = getAuth(secondaryApp);
 
   // ✅ DEFAULT PASSWORD REQUIREMENT
-  const defaultPassword = "12345678"; 
+  const defaultPassword = "12345678";
 
   try {
     if (!userData.email) throw new Error("Email is required");
-    
+
     // 2. Create the User in Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(secondaryAuth, userData.email, defaultPassword);
     const uid = userCredential.user.uid;
@@ -43,13 +43,13 @@ export async function createSystemUser(userData: Partial<User>) {
 
     // 3. Create the User Document in Firestore (Permissions)
     await setDoc(doc(db, "users", uid), {
-        name: userData.name,
-        email: userData.email,
-        role: userData.role || "Member",
-        department: userData.department || "General",
-        // ✅ Updated Avatar URL logic
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(avatarSeed)}`,
-        createdAt: new Date().toISOString()
+      name: userData.name,
+      email: userData.email,
+      role: userData.role || "Member",
+      department: userData.department || "General",
+      // ✅ Updated Avatar URL logic: Set to null to use initials fallback
+      avatarUrl: null,
+      createdAt: new Date().toISOString()
     });
 
     // 4. Sign out the secondary instance immediately
@@ -59,6 +59,6 @@ export async function createSystemUser(userData: Partial<User>) {
 
   } catch (error: any) {
     console.error("Error creating user:", error);
-    throw new Error(error.message);
+    throw error; // Re-throw full error to access error.code in UI
   }
 }

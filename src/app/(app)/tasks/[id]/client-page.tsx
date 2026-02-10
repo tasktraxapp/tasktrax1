@@ -22,6 +22,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PermissionGuard } from "@/components/permission-guard";
+import { generateWordDoc } from "@/lib/export-utils";
 
 // 🛠️ HELPER: Safe Date Formatting (Fixed for Firestore Timestamps)
 const formatDateSafe = (dateInput: any, formatStr: string = "dd-MM-yyyy") => {
@@ -357,9 +358,9 @@ export default function TaskDetailClient({ id }: { id: string }) {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 self-end md:self-auto">
                             <PermissionGuard requiredPermission="Edit Tasks">
-                                <Button variant="outline" size="sm" onClick={() => setIsSheetOpen(true)} className="flex-1 md:flex-none">
+                                <Button variant="outline" size="sm" onClick={() => setIsSheetOpen(true)} className="hidden md:inline-flex flex-1 md:flex-none">
                                     <Pencil className="mr-2 h-4 w-4" /> Edit
                                 </Button>
                             </PermissionGuard>
@@ -372,7 +373,13 @@ export default function TaskDetailClient({ id }: { id: string }) {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={handleExportTxt}><Download className="mr-2 h-4 w-4" />Download TXT</DropdownMenuItem>
+                                        <PermissionGuard requiredPermission="Edit Tasks">
+                                            <DropdownMenuItem onClick={() => setIsSheetOpen(true)} className="md:hidden">
+                                                <Pencil className="mr-2 h-4 w-4" /> Edit Task
+                                            </DropdownMenuItem>
+                                        </PermissionGuard>
+                                        <DropdownMenuItem onClick={handleExportTxt}><Download className="mr-2 h-4 w-4" />Download (.txt)</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => generateWordDoc([task], `Task-${task.id}-Report.doc`)}><Download className="mr-2 h-4 w-4" />Download (.docx)</DropdownMenuItem>
                                         <DropdownMenuItem onClick={handlePrint}><Printer className="mr-2 h-4 w-4" />Print View</DropdownMenuItem>
                                         <DropdownMenuItem onClick={handleExportPdf}><FileIcon className="mr-2 h-4 w-4" />Export PDF</DropdownMenuItem>
                                     </DropdownMenuContent>

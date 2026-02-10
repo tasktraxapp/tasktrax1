@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Row } from "@tanstack/react-table"
-import { MoreHorizontal, Eye, Printer, Pencil, Trash2, Copy } from "lucide-react"
+import { MoreHorizontal, Eye, Printer, Pencil, Trash2, Copy, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import type { Task } from "@/lib/types"
 import { usePermissions } from "@/hooks/use-permissions"
+import { generateWordDoc } from "@/lib/export-utils"
 
 // ✅ Import DB Action
 import { deleteTask } from "@/lib/db/tasks"
@@ -125,6 +126,11 @@ export function DataTableRowActions<TData>({
           <DropdownMenuItem onClick={() => window.print()}>
             <Printer className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
             Print
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => generateWordDoc([task], `task_${task.id}_details.doc`)}>
+            <Download className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+            Download .docx
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />

@@ -26,21 +26,21 @@ export function ClientPage({ data = [] }: { data?: Task[] }) {
     const newStatus: Task['status'] = isCompleted ? 'Completed' : 'Pending';
 
     try {
-        await updateTaskStatus(taskId, newStatus);
-        toast({
-            title: `Task Updated`,
-            description: `"${title}" has been marked as ${newStatus}.`,
-        });
+      await updateTaskStatus(taskId, newStatus);
+      toast({
+        title: `Task Updated`,
+        description: `"${title}" has been marked as ${newStatus}.`,
+      });
     } catch (error) {
-        console.error("Failed to update task", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not update task status.",
-        });
+      console.error("Failed to update task", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not update task status.",
+      });
     }
-  }, [tasks, toast]); 
-  
+  }, [tasks, toast]);
+
   const columns = React.useMemo(() => getColumns(handleTaskComplete), [handleTaskComplete]);
 
   // 3. Filter Active vs Completed
@@ -65,9 +65,9 @@ export function ClientPage({ data = [] }: { data?: Task[] }) {
   // Loading State
   if (loading) {
     return (
-        <div className="flex h-[50vh] items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
@@ -75,44 +75,39 @@ export function ClientPage({ data = [] }: { data?: Task[] }) {
     // ✅ OPTIMIZATION: Responsive padding and max-width for large screens
     <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-[1920px] mx-auto">
       <PrintHeader title="Tasks Summary" />
-      
+
       {/* Active Tasks Section */}
       <div className="flex flex-col gap-4 min-w-0">
         <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                Active Tasks 
-                <Badge variant="secondary" className="ml-1 rounded-full px-2">
-                    {activeTasks.length}
-                </Badge>
-            </h2>
+          <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            Active Tasks
+            <Badge variant="secondary" className="ml-1 rounded-full px-2">
+              {activeTasks.length}
+            </Badge>
+          </h2>
         </div>
-        
+
         {/* Table Wrapper (min-w-0 is crucial for mobile tables) */}
         <div className="w-full min-w-0">
-            <DataTable data={activeTasks} columns={columns} showAddTaskButton={true} />
+          <DataTable data={activeTasks} columns={columns} showAddTaskButton={true} />
         </div>
       </div>
 
-      {/* Completed Tasks Section (Accordion) */}
+      {/* Completed Tasks Section */}
       {completedTasks.length > 0 && (
-        <div className="w-full min-w-0 mt-2">
-            <Accordion type="single" collapsible className="w-full border rounded-lg bg-card shadow-sm" defaultValue="completed-tasks">
-            <AccordionItem value="completed-tasks" className="border-0">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                    <div className="flex items-center gap-3 text-lg font-semibold">
-                        <span>Completed Tasks</span>
-                        <Badge variant="outline" className="text-muted-foreground">
-                            {completedTasks.length}
-                        </Badge>
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 border-t pt-4">
-                    <div className="w-full min-w-0">
-                        <DataTable data={completedTasks} columns={columns} showAddTaskButton={false} />
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-            </Accordion>
+        <div className="flex flex-col gap-4 min-w-0 mt-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+              Completed Tasks
+              <Badge variant="outline" className="ml-1 rounded-full px-2 text-muted-foreground">
+                {completedTasks.length}
+              </Badge>
+            </h2>
+          </div>
+
+          <div className="w-full min-w-0">
+            <DataTable data={completedTasks} columns={columns} showAddTaskButton={false} />
+          </div>
         </div>
       )}
     </div>

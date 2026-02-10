@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, Banknote, Gift, TrendingUp, Printer, X, Filter, Upload, Search, Loader2 } from "lucide-react";
+import { DollarSign, Banknote, Gift, TrendingUp, Printer, X, Filter, Upload, Search, Loader2, MoreVertical } from "lucide-react";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,9 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +75,104 @@ export default function FinancialsPage() {
     const availableLabels = useMemo(() => Array.from(new Set(financialTasks.map(t => t.label).filter(Boolean) as string[])).sort(), [financialTasks]);
 
     const isFiltered = searchTerm.length > 0 || selectedYears.size > 0 || selectedStatuses.size > 0 || selectedPriorities.size > 0 || selectedLabels.size > 0;
+
+    // --- ACTIONS ---
+    const resetFilters = () => {
+        setSearchTerm('');
+        setSelectedYears(new Set());
+        setSelectedStatuses(new Set());
+        setSelectedPriorities(new Set());
+        setSelectedLabels(new Set());
+    };
+
+    // Helper to render filter items (Reused for Desktop & Mobile)
+    const renderFilterItems = () => (
+        <>
+            <DropdownMenuLabel>Year</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {availableYears.map((year) => (
+                <DropdownMenuCheckboxItem
+                    key={`year-${year}`}
+                    checked={selectedYears.has(year)}
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={(checked) => {
+                        const newSelected = new Set(selectedYears);
+                        if (checked) newSelected.add(year);
+                        else newSelected.delete(year);
+                        setSelectedYears(newSelected);
+                    }}
+                >
+                    {year}
+                </DropdownMenuCheckboxItem>
+            ))}
+
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Status</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {availableStatuses.map((status) => (
+                <DropdownMenuCheckboxItem
+                    key={`status-${status}`}
+                    checked={selectedStatuses.has(status)}
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={(checked) => {
+                        const newSelected = new Set(selectedStatuses);
+                        if (checked) newSelected.add(status);
+                        else newSelected.delete(status);
+                        setSelectedStatuses(newSelected);
+                    }}
+                >
+                    {status}
+                </DropdownMenuCheckboxItem>
+            ))}
+
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Priority</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {availablePriorities.map((priority) => (
+                <DropdownMenuCheckboxItem
+                    key={`priority-${priority}`}
+                    checked={selectedPriorities.has(priority)}
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={(checked) => {
+                        const newSelected = new Set(selectedPriorities);
+                        if (checked) newSelected.add(priority);
+                        else newSelected.delete(priority);
+                        setSelectedPriorities(newSelected);
+                    }}
+                >
+                    {priority}
+                </DropdownMenuCheckboxItem>
+            ))}
+
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Label</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {availableLabels.map((label) => (
+                <DropdownMenuCheckboxItem
+                    key={`label-${label}`}
+                    checked={selectedLabels.has(label)}
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={(checked) => {
+                        const newSelected = new Set(selectedLabels);
+                        if (checked) newSelected.add(label);
+                        else newSelected.delete(label);
+                        setSelectedLabels(newSelected);
+                    }}
+                >
+                    {label}
+                </DropdownMenuCheckboxItem>
+            ))}
+
+            {isFiltered && (
+                <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={resetFilters} className="justify-center text-center cursor-pointer">
+                        Clear All Filters
+                    </DropdownMenuItem>
+                </>
+            )}
+        </>
+    );
 
     useEffect(() => {
         let result = financialTasks;
@@ -176,13 +277,7 @@ export default function FinancialsPage() {
 
     const activeFilterCount = (selectedYears.size > 0 ? 1 : 0) + (selectedStatuses.size > 0 ? 1 : 0) + (selectedPriorities.size > 0 ? 1 : 0) + (selectedLabels.size > 0 ? 1 : 0);
 
-    const resetFilters = () => {
-        setSearchTerm('');
-        setSelectedYears(new Set());
-        setSelectedStatuses(new Set());
-        setSelectedPriorities(new Set());
-        setSelectedLabels(new Set());
-    };
+
 
     const statusVariantMap: { [key: string]: "default" | "destructive" | "secondary" } = {
         "In Progress": "default",
@@ -379,8 +474,8 @@ export default function FinancialsPage() {
                 <CardHeader>
                     <CardTitle>Financial Task List</CardTitle>
                     {/* TOOLBAR */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4">
-                        <div className="flex flex-1 items-center gap-2 w-full md:w-auto">
+                    <div className="flex items-center justify-between gap-4 pt-4">
+                        <div className="flex flex-1 items-center gap-2">
                             <div className="relative flex-1 md:flex-none">
                                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
@@ -391,6 +486,11 @@ export default function FinancialsPage() {
                                 />
                             </div>
 
+                        </div>
+
+
+                        {/* DESKTOP ACTIONS (Hidden on Mobile) */}
+                        <div className="hidden md:flex items-center gap-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
@@ -410,89 +510,7 @@ export default function FinancialsPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-[200px] max-h-96 overflow-y-auto">
-                                    <DropdownMenuLabel>Year</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {availableYears.map((year) => (
-                                        <DropdownMenuCheckboxItem
-                                            key={`year-${year}`}
-                                            checked={selectedYears.has(year)}
-                                            onSelect={(e) => e.preventDefault()}
-                                            onCheckedChange={(checked) => {
-                                                const newSelected = new Set(selectedYears);
-                                                if (checked) newSelected.add(year);
-                                                else newSelected.delete(year);
-                                                setSelectedYears(newSelected);
-                                            }}
-                                        >
-                                            {year}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuLabel>Status</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {availableStatuses.map((status) => (
-                                        <DropdownMenuCheckboxItem
-                                            key={`status-${status}`}
-                                            checked={selectedStatuses.has(status)}
-                                            onSelect={(e) => e.preventDefault()}
-                                            onCheckedChange={(checked) => {
-                                                const newSelected = new Set(selectedStatuses);
-                                                if (checked) newSelected.add(status);
-                                                else newSelected.delete(status);
-                                                setSelectedStatuses(newSelected);
-                                            }}
-                                        >
-                                            {status}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuLabel>Priority</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {availablePriorities.map((priority) => (
-                                        <DropdownMenuCheckboxItem
-                                            key={`priority-${priority}`}
-                                            checked={selectedPriorities.has(priority)}
-                                            onSelect={(e) => e.preventDefault()}
-                                            onCheckedChange={(checked) => {
-                                                const newSelected = new Set(selectedPriorities);
-                                                if (checked) newSelected.add(priority);
-                                                else newSelected.delete(priority);
-                                                setSelectedPriorities(newSelected);
-                                            }}
-                                        >
-                                            {priority}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuLabel>Label</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {availableLabels.map((label) => (
-                                        <DropdownMenuCheckboxItem
-                                            key={`label-${label}`}
-                                            checked={selectedLabels.has(label)}
-                                            onSelect={(e) => e.preventDefault()}
-                                            onCheckedChange={(checked) => {
-                                                const newSelected = new Set(selectedLabels);
-                                                if (checked) newSelected.add(label);
-                                                else newSelected.delete(label);
-                                                setSelectedLabels(newSelected);
-                                            }}
-                                        >
-                                            {label}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-
-                                    {isFiltered && (
-                                        <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onSelect={resetFilters} className="justify-center text-center cursor-pointer">
-                                                Clear All Filters
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
+                                    {renderFilterItems()}
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
@@ -501,9 +519,7 @@ export default function FinancialsPage() {
                                     Reset <X className="ml-2 h-4 w-4" />
                                 </Button>
                             )}
-                        </div>
 
-                        <div className="flex items-center space-x-2 justify-end w-full md:w-auto">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon" className="h-9 w-9">
@@ -515,14 +531,66 @@ export default function FinancialsPage() {
                                     <DropdownMenuItem onClick={handleExportCsv}>Export as CSV</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            {/* ✅ PRINT PDF BUTTON (Now Android Compatible) */}
+
                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrintPdf}>
                                 <Printer className="h-4 w-4" />
                                 <span className="sr-only">Print</span>
                             </Button>
                         </div>
+
+                        {/* MOBILE ACTIONS (Visible only on Mobile) */}
+                        <div className="flex md:hidden items-center gap-2">
+                            {isFiltered && (
+                                <Button variant="ghost" onClick={resetFilters} size="sm" className="h-9 px-2">
+                                    Reset <X className="ml-2 h-4 w-4" />
+                                </Button>
+                            )}
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon" className="h-9 w-9">
+                                        <MoreVertical className="h-4 w-4" />
+                                        <span className="sr-only">Actions</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-64">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+
+                                    {/* EXPORT OPTIONS */}
+                                    <DropdownMenuItem onClick={handleExportCsv}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        <span>Export CSV</span>
+                                    </DropdownMenuItem>
+
+                                    {/* PRINT OPTION */}
+                                    <DropdownMenuItem onClick={handlePrintPdf}>
+                                        <Printer className="mr-2 h-4 w-4" />
+                                        <span>Print PDF</span>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="flex items-center">
+                                        <Filter className="mr-2 h-4 w-4" />
+                                        Filters
+                                        {activeFilterCount > 0 && (
+                                            <Badge variant="secondary" className="ml-auto text-xs h-5 px-1.5 min-w-[1.25rem] justify-center">
+                                                {activeFilterCount}
+                                            </Badge>
+                                        )}
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+
+                                    {/* INLINE FILTERS (Scrollable) */}
+                                    <div className="max-h-[300px] overflow-y-auto">
+                                        {renderFilterItems()}
+                                    </div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
-                </CardHeader>
+
+                </CardHeader >
 
                 <CardContent className="p-0 sm:p-6">
                     <div className="overflow-x-auto">
@@ -575,7 +643,7 @@ export default function FinancialsPage() {
                         </Table>
                     </div>
                 </CardContent>
-            </Card>
-        </div>
+            </Card >
+        </div >
     );
 }
