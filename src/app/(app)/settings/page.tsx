@@ -523,9 +523,8 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                                 <div className="flex justify-end pt-4">
-                                    <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="w-full sm:w-auto min-w-[150px]">
-                                        {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                        {isSavingProfile ? "Saving..." : "Save Changes"}
+                                    <Button onClick={handleSaveProfile} disabled={isSavingProfile} size="icon">
+                                        {isSavingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </CardContent>
