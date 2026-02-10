@@ -380,8 +380,8 @@ export default function TaskDetailClient({ id }: { id: string }) {
                                         </PermissionGuard>
                                         <DropdownMenuItem onClick={handleExportTxt}><Download className="mr-2 h-4 w-4" />Download (.txt)</DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => generateWordDoc([task], `Task-${task.id}-Report.doc`)}><Download className="mr-2 h-4 w-4" />Download (.docx)</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={handlePrint}><Printer className="mr-2 h-4 w-4" />Print View</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={handleExportPdf}><FileIcon className="mr-2 h-4 w-4" />Export PDF</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handlePrint}><Printer className="mr-2 h-4 w-4" />Print </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleExportPdf}><FileIcon className="mr-2 h-4 w-4" />Export (.pdf)</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 

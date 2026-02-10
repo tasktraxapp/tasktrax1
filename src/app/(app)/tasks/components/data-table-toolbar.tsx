@@ -241,14 +241,14 @@ export function DataTableToolbar<TData>({
     }
 
     return (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between no-print mb-4">
+        <div className="flex items-center justify-between gap-2 no-print mb-4">
 
             {/* SEARCH & FILTERS */}
-            <div className="flex flex-1 items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-1 items-center gap-2">
                 <div className="relative flex-1 sm:grow-0">
                     <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                        placeholder="Search tasks..."
+                        placeholder="Search..."
                         value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
                         onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
                         className="h-9 w-full sm:w-[200px] lg:w-[250px] pl-8"
@@ -257,7 +257,7 @@ export function DataTableToolbar<TData>({
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-9 w-9">
+                        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
                             <Filter className="h-4 w-4" />
                             <span className="sr-only">Filter</span>
                             {activeFilterCount > 0 && (
@@ -347,7 +347,7 @@ export function DataTableToolbar<TData>({
                 </DropdownMenu>
 
                 {isFiltered && (
-                    <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-9 px-2 lg:px-3">
+                    <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-9 px-2 lg:px-3 shrink-0">
                         Reset <X className="ml-2 h-4 w-4" />
                     </Button>
                 )}
@@ -355,7 +355,7 @@ export function DataTableToolbar<TData>({
 
             {/* ACTIONS (Right Side) */}
             {/* ACTIONS (Right Side) */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2 shrink-0">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon" className="h-9 w-9">
@@ -366,7 +366,7 @@ export function DataTableToolbar<TData>({
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={handleDownloadTxt}>Download (.txt)</DropdownMenuItem>
                         <DropdownMenuItem onClick={handleDownloadWord}>Download (.docx)</DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleExportCsv}>Export (.csv)    </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleExportCsv}>Export (.csv)</DropdownMenuItem>
 
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -379,8 +379,8 @@ export function DataTableToolbar<TData>({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handlePrintSummary}>Print Summary (PDF)</DropdownMenuItem>
-                        <DropdownMenuItem onClick={handlePrintDetails}>Print Details (PDF)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handlePrintSummary}>Print Summary (.pdf)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handlePrintDetails}>Print Details (.pdf)</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 

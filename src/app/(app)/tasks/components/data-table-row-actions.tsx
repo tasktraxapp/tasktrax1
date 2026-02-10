@@ -125,7 +125,7 @@ export function DataTableRowActions<TData>({
 
           <DropdownMenuItem onClick={() => window.print()}>
             <Printer className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-            Print
+            Print View
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => generateWordDoc([task], `task_${task.id}_details.doc`)}>

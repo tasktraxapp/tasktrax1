@@ -56,18 +56,21 @@ export default function FinancialsPage() {
 
     const [displaySummary, setDisplaySummary] = useState<FinancialSummary>(initialSummary);
 
-    // ✅ Available Years (Defaults + Data)
+    // ✅ Available Years (Dynamic from Data)
     const availableYears = useMemo(() => {
-        const defaultYears = ["2024", "2025", "2026"];
         const dataYears = financialTasks.map(task => {
-            const dateStr = task.entryDate || task.createdAt || new Date().toISOString();
+            const dateStr = task.entryDate || task.createdAt;
+            if (!dateStr) return null;
             const dateObj = new Date(dateStr);
-            return isNaN(dateObj.getTime()) ? "N/A" : dateObj.getFullYear().toString();
-        });
-        const combinedYears = new Set([...defaultYears, ...dataYears]);
-        return Array.from(combinedYears)
-            .filter(y => y !== "N/A")
-            .sort((a, b) => b.localeCompare(a));
+            return isNaN(dateObj.getTime()) ? null : dateObj.getFullYear().toString();
+        }).filter(Boolean) as string[];
+
+        // Always include current year if no data, otherwise just the data years
+        if (dataYears.length === 0) {
+            return [new Date().getFullYear().toString()];
+        }
+
+        return Array.from(new Set(dataYears)).sort((a, b) => b.localeCompare(a));
     }, [financialTasks]);
 
     const availableStatuses = useMemo(() => Array.from(new Set(financialTasks.map(t => t.status || "Pending"))).sort(), [financialTasks]);
