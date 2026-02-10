@@ -258,17 +258,17 @@ export default function DocumentsPage() {
                                                                     </DropdownMenuTrigger>
                                                                     <DropdownMenuContent align="end">
                                                                         <DropdownMenuItem onClick={() => window.open(doc.url, "_blank")}>
-                                                                            <Eye className="mr-2 h-4 w-4" /> View
+                                                                            View
                                                                         </DropdownMenuItem>
 
                                                                         <DropdownMenuItem onClick={() => handlePrint(doc.url, doc.fileType)}>
-                                                                            <Printer className="mr-2 h-4 w-4" /> Print
+                                                                            Print
                                                                         </DropdownMenuItem>
 
                                                                         <DropdownMenuSeparator />
 
                                                                         <DropdownMenuItem onClick={() => handleDownload(doc.url, doc.name)}>
-                                                                            <Download className="mr-2 h-4 w-4" /> Download
+                                                                            Download
                                                                         </DropdownMenuItem>
                                                                     </DropdownMenuContent>
                                                                 </DropdownMenu>

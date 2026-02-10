@@ -360,8 +360,9 @@ export default function TaskDetailClient({ id }: { id: string }) {
                         {/* Action Buttons */}
                         <div className="flex flex-wrap items-center gap-2 self-end md:self-auto">
                             <PermissionGuard requiredPermission="Edit Tasks">
-                                <Button variant="outline" size="sm" onClick={() => setIsSheetOpen(true)} className="hidden md:inline-flex flex-1 md:flex-none">
-                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                <Button size="icon" onClick={() => setIsSheetOpen(true)} className="hidden md:inline-flex h-9 w-9">
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit</span>
                                 </Button>
                             </PermissionGuard>
 
@@ -375,13 +376,11 @@ export default function TaskDetailClient({ id }: { id: string }) {
                                     <DropdownMenuContent align="end">
                                         <PermissionGuard requiredPermission="Edit Tasks">
                                             <DropdownMenuItem onClick={() => setIsSheetOpen(true)} className="md:hidden">
-                                                <Pencil className="mr-2 h-4 w-4" /> Edit Task
+                                                Edit Task
                                             </DropdownMenuItem>
                                         </PermissionGuard>
-                                        <DropdownMenuItem onClick={handleExportTxt}><Download className="mr-2 h-4 w-4" />Download (.txt)</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => generateWordDoc([task], `Task-${task.id}-Report.doc`)}><Download className="mr-2 h-4 w-4" />Download (.docx)</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={handlePrint}><Printer className="mr-2 h-4 w-4" />Print </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={handleExportPdf}><FileIcon className="mr-2 h-4 w-4" />Export (.pdf)</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handlePrint}>View (.pdf)</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => generateWordDoc([task], `Task-${task.id}-Report.doc`)}>Download (.docx)</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 

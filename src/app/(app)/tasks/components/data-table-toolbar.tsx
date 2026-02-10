@@ -3,7 +3,7 @@
 import { type Table } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, Filter, X, Upload, Printer, Search } from "lucide-react"
+import { PlusCircle, Filter, X, Search, MoreHorizontal } from "lucide-react"
 import { AddTaskSheet } from "./add-task-sheet"
 import { PermissionGuard } from "@/components/permission-guard"
 import type { Task } from "@/lib/types"
@@ -358,29 +358,16 @@ export function DataTableToolbar<TData>({
             <div className="flex items-center gap-2 shrink-0">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-9 w-9">
-                            <Upload className="h-4 w-4" />
-                            <span className="sr-only">Export</span>
+                        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">More Actions</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleDownloadTxt}>Download (.txt)</DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDownloadWord}>Download (.docx)</DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleExportCsv}>Export (.csv)</DropdownMenuItem>
-
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-9 w-9">
-                            <Printer className="h-4 w-4" />
-                            <span className="sr-only">Print</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handlePrintSummary}>Print Summary (.pdf)</DropdownMenuItem>
-                        <DropdownMenuItem onClick={handlePrintDetails}>Print Details (.pdf)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handlePrintSummary}>View Summary (.pdf)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handlePrintDetails}>View Details (.pdf)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => generateWordDoc(table.getFilteredRowModel().rows.map(row => row.original as Task), `Tasks-Report-${format(new Date(), 'dd-MM-yyyy')}.doc`)}>Download Details (.docx)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleExportCsv}>Export Summary (.csv)</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 

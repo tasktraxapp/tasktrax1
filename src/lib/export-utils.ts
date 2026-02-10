@@ -34,12 +34,13 @@ export const generateWordDoc = (tasks: Task[], filename: string = 'task_report.d
         <title>Task Detail View</title>
         <style>
             @page { size: A4; margin: 0.5in; }
-            body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.2; }
+            body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.0; }
+            p { margin: 0; padding: 0; }
             .report-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
             .meta { font-size: 10px; color: #555; margin-bottom: 10px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; border: 1px solid #000; page-break-inside: avoid; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 0; border: 1px solid #000; page-break-inside: avoid; }
             th { background-color: #4f81bd; color: white; font-weight: bold; text-align: left; padding: 4px 8px; font-size: 12px; border: 1px solid #000; }
-            td { border: 1px solid #000; padding: 3px 8px; font-size: 10px; vertical-align: middle; }
+            td { border: 1px solid #000; padding: 3px 8px; font-size: 11px; vertical-align: middle; }
             .label-col { width: 25%; background-color: #f2f2f2; font-weight: bold; color: #000; }
         </style>
     </head>
@@ -83,6 +84,78 @@ export const generateWordDoc = (tasks: Task[], filename: string = 'task_report.d
         htmlContent += `</tbody></table>`;
     });
     htmlContent += `</body></html>`;
+
+    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+export const generateFinancialsWordDoc = (tasks: Task[], filename: string = 'financials_report.doc') => {
+    let htmlContent = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+        <meta charset="utf-8">
+        <title>Financials Report</title>
+        <style>
+            @page { size: landscape; margin: 0.5in; }
+            body { font-family: Arial, sans-serif; font-size: 11pt; }
+            p { margin: 0; padding: 0; }
+            table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
+            th { background-color: #4f81bd; color: white; border: 1px solid #000; padding: 5px; font-size: 11px; }
+            td { border: 1px solid #000; padding: 5px; font-size: 11px; }
+            .currency { text-align: right; white-space: nowrap; }
+            .header { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+            .meta { font-size: 10px; color: #666; margin-bottom: 10px; }
+        </style>
+    </head>
+    <body>
+        <div class="header">Financials Report</div>
+        <div class="meta">Generated: ${format(new Date(), "dd-MM-yyyy HH:mm:ss")}</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Label</th>
+                    <th>Period</th>
+                    <th>Sender</th>
+                    <th>Receiver</th>
+                    <th>Assignee</th>
+                    <th>Status</th>
+                    <th>Initial Demand</th>
+                    <th>Official Payment</th>
+                    <th>Motivation</th>
+                </tr>
+            </thead>
+            <tbody>
+`;
+
+    tasks.forEach(task => {
+        htmlContent += `
+        <tr>
+            <td>${task.id}</td>
+            <td>${task.title}</td>
+            <td>${task.label || ''}</td>
+            <td>${task.period || ''}</td>
+            <td>${task.sender || ''}</td>
+            <td>${task.receiver || ''}</td>
+            <td>${task.assignee?.name || 'Unassigned'}</td>
+            <td>${task.status || 'Pending'}</td>
+            <td class="currency">${formatCurrency(task.initialDemand || 0, task.initialDemandCurrency)}</td>
+            <td class="currency">${formatCurrency(task.officialSettlement || 0, task.officialSettlementCurrency)}</td>
+            <td class="currency">${formatCurrency(task.motivation || 0, task.motivationCurrency)}</td>
+        </tr>`;
+    });
+
+    htmlContent += `
+            </tbody>
+        </table>
+    </body>
+    </html>`;
 
     const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
     const link = document.createElement('a');

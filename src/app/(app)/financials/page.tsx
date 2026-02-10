@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, Banknote, Gift, TrendingUp, Printer, X, Filter, Upload, Search, Loader2, MoreVertical } from "lucide-react";
+import { DollarSign, Banknote, Gift, TrendingUp, Printer, X, Filter, Upload, Search, Loader2, MoreVertical, MoreHorizontal } from "lucide-react";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +27,9 @@ import { format } from 'date-fns';
 import type { Task, FinancialSummary } from '@/lib/types';
 
 // Import Real-Time Hook
+// Import Real-Time Hook
 import { useRealtimeTasks } from "@/hooks/use-tasks";
+import { generateFinancialsWordDoc } from '@/lib/export-utils';
 
 const initialSummary: FinancialSummary = {
     USD: { totalInitialDemand: 0, totalOfficialPayment: 0, totalMotivation: 0, grandTotal: 0 }
@@ -526,19 +528,15 @@ export default function FinancialsPage() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon" className="h-9 w-9">
-                                        <Upload className="h-4 w-4" />
-                                        <span className="sr-only">Export</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">More Actions</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleExportCsv}>Export as CSV</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handlePrintPdf}>View (.pdf)</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleExportCsv}>Export (.csv)</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrintPdf}>
-                                <Printer className="h-4 w-4" />
-                                <span className="sr-only">Print</span>
-                            </Button>
                         </div>
 
                         {/* MOBILE ACTIONS (Visible only on Mobile) */}
@@ -552,7 +550,7 @@ export default function FinancialsPage() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon" className="h-9 w-9">
-                                        <MoreVertical className="h-4 w-4" />
+                                        <MoreHorizontal className="h-4 w-4" />
                                         <span className="sr-only">Actions</span>
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -560,16 +558,12 @@ export default function FinancialsPage() {
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
 
-                                    {/* EXPORT OPTIONS */}
-                                    <DropdownMenuItem onClick={handleExportCsv}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        <span>Export CSV</span>
+                                    <DropdownMenuItem onClick={handlePrintPdf}>
+                                        <span>View (.pdf)</span>
                                     </DropdownMenuItem>
 
-                                    {/* PRINT OPTION */}
-                                    <DropdownMenuItem onClick={handlePrintPdf}>
-                                        <Printer className="mr-2 h-4 w-4" />
-                                        <span>Print PDF</span>
+                                    <DropdownMenuItem onClick={handleExportCsv}>
+                                        <span>Export (.csv)</span>
                                     </DropdownMenuItem>
 
                                     <DropdownMenuSeparator />
