@@ -1,29 +1,29 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  signOut 
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut
 } from "firebase/auth";
-import { doc, getDoc, setDoc, collection, addDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, addDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 // --- HELPERS ---
 // Capitalize first letter: "manager" -> "Manager"
 const formatName = (str: string) => {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1);
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 // Derive Name from Email: "manager@tasktrax.com" -> "Manager"
 const deriveNameFromEmail = (email: string | null) => {
-    if (!email) return "User";
-    const prefix = email.split('@')[0];
-    // Remove numbers or dots if cleaner name needed, or just capitalize
-    return formatName(prefix.replace(/[0-9.]/g, ' ')); 
+  if (!email) return "User";
+  const prefix = email.split('@')[0];
+  // Remove numbers or dots if cleaner name needed, or just capitalize
+  return formatName(prefix.replace(/[0-9.]/g, ' '));
 };
 
 // --- LOGGING ---
@@ -56,89 +56,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const docRef = doc(db, "users", firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
-        
-        let userData: User;
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          // ✅ INTELLIGENT NAME FALLBACK
-          // If name in DB is missing or "User", try to generate a better one from email
-          let displayName = data.name;
-          if (!displayName || displayName === "User") {
-             displayName = deriveNameFromEmail(firebaseUser.email);
+        // ✅ REAL-TIME LISTENER: If user is deleted while active, log them out
+        const unsubUser = onSnapshot(docRef, async (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            let displayName = data.name;
+            if (!displayName || displayName === "User") {
+              displayName = deriveNameFromEmail(firebaseUser.email);
+            }
+
+            // Admin Fix
+            if (firebaseUser.email === "admin@tasktrax.com" && data.role !== "Admin") {
+              await setDoc(docRef, { role: "Admin" }, { merge: true });
+              data.role = "Admin";
+            }
+
+            setUser({ id: docSnap.id, ...data, name: displayName } as User);
+            setLoading(false);
+          } else {
+            // ❌ USER DELETED: Force Logout
+            console.warn("User document not found. Logging out.");
+            await signOut(auth);
+            setUser(null);
+            if (pathname !== "/login") {
+              router.push("/login");
+            }
+            setLoading(false);
           }
+        }, (error) => {
+          console.error("Auth User Sync Error:", error);
+          setLoading(false);
+        });
 
-          userData = { id: docSnap.id, ...data, name: displayName } as User;
-        } else {
-          // New User Setup
-          userData = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName || deriveNameFromEmail(firebaseUser.email),
-            email: firebaseUser.email || "",
-            role: "Member",
-            avatarUrl: firebaseUser.photoURL || ""
-          };
-        }
+        // Cleanup listener on unmount or user change
+        return () => unsubUser();
 
-        // Admin Fix
-        if (firebaseUser.email === "admin@tasktrax.com" && userData.role !== "Admin") {
-            await setDoc(docRef, { role: "Admin" }, { merge: true });
-            userData.role = "Admin"; 
-        }
-
-        setUser(userData);
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const login = async (email: string, password: string) => {
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const firebaseUser = userCredential.user;
-        
-        // Fetch fresh data
-        const docRef = doc(db, "users", firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
-        
-        let userData: User;
-        
-        if (docSnap.exists()) {
-           const data = docSnap.data();
-           let displayName = data.name;
-           if (!displayName || displayName === "User") {
-             displayName = deriveNameFromEmail(firebaseUser.email);
-           }
-           userData = { id: docSnap.id, ...data, name: displayName } as User;
-        } else {
-           userData = {
-                id: firebaseUser.uid,
-                name: deriveNameFromEmail(firebaseUser.email),
-                email: firebaseUser.email || "",
-                role: "Member",
-                avatarUrl: ""
-           };
-        }
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
-        // Update State & Log
-        setUser(userData);
-        await recordLoginEvent(userData); // Now logs "Manager" correctly
-        
-        router.push("/");
+      // Fetch fresh data
+      const docRef = doc(db, "users", firebaseUser.uid);
+      const docSnap = await getDoc(docRef);
+
+      let userData: User;
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        let displayName = data.name;
+        if (!displayName || displayName === "User") {
+          displayName = deriveNameFromEmail(firebaseUser.email);
+        }
+        userData = { id: docSnap.id, ...data, name: displayName } as User;
+      } else {
+        // ❌ STRICT BLOCK: If no Firestore doc, DENY LOGIN
+        await signOut(auth);
+        throw new Error("Access Denied: Account does not exist.");
+      }
+
+      // Update State & Log
+      setUser(userData);
+      await recordLoginEvent(userData); // Now logs "Manager" correctly
+
+      router.push("/");
 
     } catch (error: any) {
-        console.error("Login Error:", error);
-        throw error;
+      console.error("Login Error:", error);
+      throw error;
     }
   };
 

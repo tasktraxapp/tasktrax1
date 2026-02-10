@@ -35,22 +35,22 @@ export default function FinancialsPage() {
 
     // Memoize financial tasks
     const financialTasks = useMemo(() => {
-        return tasks.filter(task => 
-            (Number(task.initialDemand) > 0) || 
-            (Number(task.officialSettlement) > 0) || 
+        return tasks.filter(task =>
+            (Number(task.initialDemand) > 0) ||
+            (Number(task.officialSettlement) > 0) ||
             (Number(task.motivation) > 0)
         );
     }, [tasks]);
 
     const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // Filters
     const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set());
     const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
     const [selectedPriorities, setSelectedPriorities] = useState<Set<string>>(new Set());
     const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
-    
+
     const [displaySummary, setDisplaySummary] = useState<FinancialSummary>(initialSummary);
 
     // ✅ Available Years (Defaults + Data)
@@ -103,7 +103,7 @@ export default function FinancialsPage() {
     useEffect(() => {
         const calculateSummary = (tasks: Task[]): FinancialSummary => {
             const summaryData: FinancialSummary = {};
-            
+
             tasks.forEach(task => {
                 const iCurrency = task.initialDemandCurrency || 'USD';
                 const oCurrency = task.officialSettlementCurrency || 'USD';
@@ -140,21 +140,21 @@ export default function FinancialsPage() {
     const formatCurrency = (amount: number | string | undefined | null, currencyCode = 'USD') => {
         let val = Number(amount);
         if (isNaN(val)) val = 0;
-        
+
         const safeCurrency = currencyCode || 'USD';
 
         try {
-            const parts = new Intl.NumberFormat('en-US', { 
-                style: 'currency', 
-                currency: safeCurrency 
+            const parts = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: safeCurrency
             }).formatToParts(0);
 
             const symbol = parts.find(p => p.type === 'currency')?.value || safeCurrency;
 
-            const numberStr = new Intl.NumberFormat('en-US', { 
-                style: 'decimal', 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
+            const numberStr = new Intl.NumberFormat('en-US', {
+                style: 'decimal',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             }).format(val);
 
             return `${symbol} ${numberStr}`;
@@ -163,9 +163,17 @@ export default function FinancialsPage() {
             return `${safeCurrency} ${val.toFixed(2)}`;
         }
     }
-    
+
+    const getDynamicFontSize = (text: string) => {
+        const length = text.length;
+        if (length > 20) return "text-xs"; // Very long numbers
+        if (length > 15) return "text-sm"; // Long numbers
+        if (length > 12) return "text-lg"; // Medium numbers
+        return "text-2xl"; // Standard
+    };
+
     const summaryCurrencies = Object.keys(displaySummary).sort();
-    
+
     const activeFilterCount = (selectedYears.size > 0 ? 1 : 0) + (selectedStatuses.size > 0 ? 1 : 0) + (selectedPriorities.size > 0 ? 1 : 0) + (selectedLabels.size > 0 ? 1 : 0);
 
     const resetFilters = () => {
@@ -183,7 +191,7 @@ export default function FinancialsPage() {
         "Pending": "default",
         "To hold": "secondary"
     };
-    
+
     const statusClassMap: { [key: string]: string | undefined } = {
         "In Progress": "bg-[hsl(var(--chart-3))] text-primary-foreground hover:bg-[hsl(var(--chart-3))]/80",
         "Completed": "bg-[hsl(var(--chart-1))] text-primary-foreground hover:bg-[hsl(var(--chart-1))]/80",
@@ -234,7 +242,7 @@ export default function FinancialsPage() {
         doc.setTextColor(100);
         const printDateTime = format(new Date(), "dd-MM-yyyy HH:mm:ss");
         doc.text(`Printed on: ${printDateTime}`, 14, 30);
-    
+
         const head = [["Task ID", "Title", "Label", "Period", "Sender", "Receiver", "Assignee", "Status", "Initial Demand", "Official Payment", "Motivation"]];
         const body = filteredTasks.map(task => ([
             task.id,
@@ -249,16 +257,31 @@ export default function FinancialsPage() {
             formatCurrency(task.officialSettlement || 0, task.officialSettlementCurrency),
             formatCurrency(task.motivation || 0, task.motivationCurrency),
         ]));
-    
+
         autoTable(doc, {
             startY: 35,
             head: head,
             body: body,
             theme: 'grid',
-            headStyles: { fillColor: [41, 128, 185] },
+            headStyles: { fillColor: [41, 128, 185], fontSize: 8, halign: 'center' },
+            styles: { fontSize: 6.5, cellPadding: 1, overflow: 'linebreak', valign: 'middle' }, // Maximum compactness
+            columnStyles: {
+                0: { cellWidth: 15 }, // ID
+                1: { cellWidth: 35 }, // Title
+                2: { cellWidth: 15 }, // Label
+                3: { cellWidth: 20 }, // Period
+                4: { cellWidth: 25 }, // Sender
+                5: { cellWidth: 25 }, // Receiver
+                6: { cellWidth: 25 }, // Assignee
+                7: { cellWidth: 20 }, // Status
+                8: { halign: 'right', fontStyle: 'bold' }, // Initial Demand
+                9: { halign: 'right', fontStyle: 'bold' }, // Official Payment
+                10: { halign: 'right', fontStyle: 'bold' }, // Motivation
+            },
+            margin: { top: 30, left: 5, right: 5 } // Maximize printable width
         });
-    
-        // ✅ FIXED FOR ANDROID: Generate Blob and Open URL
+
+        // ✅ OPEN PDF
         const pdfBlob = doc.output('blob');
         const pdfUrl = URL.createObjectURL(pdfBlob);
         window.open(pdfUrl, '_blank');
@@ -275,7 +298,7 @@ export default function FinancialsPage() {
     return (
         <div className="flex flex-col gap-6 p-4 md:p-8 w-full max-w-[1920px] mx-auto">
             <h1 className="text-2xl font-bold tracking-tight">Financials</h1>
-            
+
             {/* STATS GRID */}
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -284,11 +307,16 @@ export default function FinancialsPage() {
                         <DollarSign className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent className="space-y-1">
-                        {summaryCurrencies.map(currency => (
-                            displaySummary[currency].totalInitialDemand > 0 &&
-                            <div key={currency} className="text-2xl font-bold">{formatCurrency(displaySummary[currency].totalInitialDemand, currency)}</div>
-                        ))}
-                         {summaryCurrencies.every(c => displaySummary[c].totalInitialDemand === 0) && <div className="text-2xl font-bold">$ 0.00</div>}
+                        {summaryCurrencies.map(currency => {
+                            const val = formatCurrency(displaySummary[currency].totalInitialDemand, currency);
+                            return (
+                                displaySummary[currency].totalInitialDemand > 0 &&
+                                <div key={currency} className={`${getDynamicFontSize(val)} font-bold overflow-x-auto whitespace-nowrap pb-1`} title={val}>
+                                    {val}
+                                </div>
+                            );
+                        })}
+                        {summaryCurrencies.every(c => displaySummary[c].totalInitialDemand === 0) && <div className="text-2xl font-bold">$ 0.00</div>}
                     </CardContent>
                 </Card>
                 <Card>
@@ -297,10 +325,15 @@ export default function FinancialsPage() {
                         <Banknote className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent className="space-y-1">
-                        {summaryCurrencies.map(currency => (
-                            displaySummary[currency].totalOfficialPayment > 0 &&
-                            <div key={currency} className="text-2xl font-bold">{formatCurrency(displaySummary[currency].totalOfficialPayment, currency)}</div>
-                        ))}
+                        {summaryCurrencies.map(currency => {
+                            const val = formatCurrency(displaySummary[currency].totalOfficialPayment, currency);
+                            return (
+                                displaySummary[currency].totalOfficialPayment > 0 &&
+                                <div key={currency} className={`${getDynamicFontSize(val)} font-bold overflow-x-auto whitespace-nowrap pb-1`} title={val}>
+                                    {val}
+                                </div>
+                            );
+                        })}
                         {summaryCurrencies.every(c => displaySummary[c].totalOfficialPayment === 0) && <div className="text-2xl font-bold">$ 0.00</div>}
                     </CardContent>
                 </Card>
@@ -310,10 +343,15 @@ export default function FinancialsPage() {
                         <Gift className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent className="space-y-1">
-                        {summaryCurrencies.map(currency => (
-                            displaySummary[currency].totalMotivation > 0 &&
-                            <div key={currency} className="text-2xl font-bold">{formatCurrency(displaySummary[currency].totalMotivation, currency)}</div>
-                        ))}
+                        {summaryCurrencies.map(currency => {
+                            const val = formatCurrency(displaySummary[currency].totalMotivation, currency);
+                            return (
+                                displaySummary[currency].totalMotivation > 0 &&
+                                <div key={currency} className={`${getDynamicFontSize(val)} font-bold overflow-x-auto whitespace-nowrap pb-1`} title={val}>
+                                    {val}
+                                </div>
+                            );
+                        })}
                         {summaryCurrencies.every(c => displaySummary[c].totalMotivation === 0) && <div className="text-2xl font-bold">$ 0.00</div>}
                     </CardContent>
                 </Card>
@@ -323,22 +361,27 @@ export default function FinancialsPage() {
                         <TrendingUp className="h-4 w-4 text-indigo-500" />
                     </CardHeader>
                     <CardContent className="space-y-1">
-                        {summaryCurrencies.map(currency => (
-                            displaySummary[currency].grandTotal > 0 &&
-                            <div key={currency} className="text-2xl font-bold">{formatCurrency(displaySummary[currency].grandTotal, currency)}</div>
-                        ))}
+                        {summaryCurrencies.map(currency => {
+                            const val = formatCurrency(displaySummary[currency].grandTotal, currency);
+                            return (
+                                displaySummary[currency].grandTotal > 0 &&
+                                <div key={currency} className={`${getDynamicFontSize(val)} font-bold overflow-x-auto whitespace-nowrap pb-1`} title={val}>
+                                    {val}
+                                </div>
+                            );
+                        })}
                         {summaryCurrencies.every(c => displaySummary[c].grandTotal === 0) && <div className="text-2xl font-bold">$ 0.00</div>}
                     </CardContent>
                 </Card>
             </div>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle>Financial Task List</CardTitle>
                     {/* TOOLBAR */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4">
                         <div className="flex flex-1 items-center gap-2 w-full md:w-auto">
-                           <div className="relative flex-1 md:flex-none">
+                            <div className="relative flex-1 md:flex-none">
                                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     placeholder="Search..."
@@ -347,11 +390,11 @@ export default function FinancialsPage() {
                                     className="h-9 w-full md:w-[250px] pl-8"
                                 />
                             </div>
-                            
+
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         className={activeFilterCount > 0 ? "h-9 px-2 gap-1 border-dashed" : "h-9 w-9 p-0"}
                                     >
                                         <Filter className="h-4 w-4" />
@@ -368,10 +411,10 @@ export default function FinancialsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-[200px] max-h-96 overflow-y-auto">
                                     <DropdownMenuLabel>Year</DropdownMenuLabel>
-                                    <DropdownMenuSeparator/>
+                                    <DropdownMenuSeparator />
                                     {availableYears.map((year) => (
                                         <DropdownMenuCheckboxItem
-                                            key={`year-${year}`} 
+                                            key={`year-${year}`}
                                             checked={selectedYears.has(year)}
                                             onSelect={(e) => e.preventDefault()}
                                             onCheckedChange={(checked) => {
@@ -384,11 +427,11 @@ export default function FinancialsPage() {
                                             {year}
                                         </DropdownMenuCheckboxItem>
                                     ))}
-                                    
+
                                     <DropdownMenuSeparator />
                                     <DropdownMenuLabel>Status</DropdownMenuLabel>
-                                    <DropdownMenuSeparator/>
-                                     {availableStatuses.map((status) => (
+                                    <DropdownMenuSeparator />
+                                    {availableStatuses.map((status) => (
                                         <DropdownMenuCheckboxItem
                                             key={`status-${status}`}
                                             checked={selectedStatuses.has(status)}
@@ -406,8 +449,8 @@ export default function FinancialsPage() {
 
                                     <DropdownMenuSeparator />
                                     <DropdownMenuLabel>Priority</DropdownMenuLabel>
-                                    <DropdownMenuSeparator/>
-                                     {availablePriorities.map((priority) => (
+                                    <DropdownMenuSeparator />
+                                    {availablePriorities.map((priority) => (
                                         <DropdownMenuCheckboxItem
                                             key={`priority-${priority}`}
                                             checked={selectedPriorities.has(priority)}
@@ -422,10 +465,10 @@ export default function FinancialsPage() {
                                             {priority}
                                         </DropdownMenuCheckboxItem>
                                     ))}
-                                    
+
                                     <DropdownMenuSeparator />
                                     <DropdownMenuLabel>Label</DropdownMenuLabel>
-                                    <DropdownMenuSeparator/>
+                                    <DropdownMenuSeparator />
                                     {availableLabels.map((label) => (
                                         <DropdownMenuCheckboxItem
                                             key={`label-${label}`}
@@ -444,10 +487,10 @@ export default function FinancialsPage() {
 
                                     {isFiltered && (
                                         <>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onSelect={resetFilters} className="justify-center text-center cursor-pointer">
-                                            Clear All Filters
-                                        </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onSelect={resetFilters} className="justify-center text-center cursor-pointer">
+                                                Clear All Filters
+                                            </DropdownMenuItem>
                                         </>
                                     )}
                                 </DropdownMenuContent>
@@ -459,9 +502,9 @@ export default function FinancialsPage() {
                                 </Button>
                             )}
                         </div>
-                        
+
                         <div className="flex items-center space-x-2 justify-end w-full md:w-auto">
-                             <DropdownMenu>
+                            <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon" className="h-9 w-9">
                                         <Upload className="h-4 w-4" />
@@ -480,7 +523,7 @@ export default function FinancialsPage() {
                         </div>
                     </div>
                 </CardHeader>
-                
+
                 <CardContent className="p-0 sm:p-6">
                     <div className="overflow-x-auto">
                         <Table className="min-w-[1200px]">
@@ -505,9 +548,9 @@ export default function FinancialsPage() {
                                         <TableRow key={task.id}>
                                             <TableCell className="font-medium text-xs text-muted-foreground w-16 truncate" title={task.id}>{task.id}</TableCell>
                                             <TableCell>
-                                            <Link href={`/tasks/${task.id}`} className="hover:underline font-medium block truncate max-w-[200px]">
-                                                {task.title}
-                                            </Link>
+                                                <Link href={`/tasks/${task.id}`} className="hover:underline font-medium block truncate max-w-[200px]">
+                                                    {task.title}
+                                                </Link>
                                             </TableCell>
                                             <TableCell>{task.label && <Badge variant="outline" className="whitespace-nowrap">{task.label}</Badge>}</TableCell>
                                             <TableCell className="whitespace-nowrap">{task.period || 'N/A'}</TableCell>
@@ -515,7 +558,7 @@ export default function FinancialsPage() {
                                             <TableCell>{task.receiver}</TableCell>
                                             <TableCell>{task.assignee?.name || "Unassigned"}</TableCell>
                                             <TableCell><Badge variant={statusVariantMap[task.status]} className={`whitespace-nowrap ${statusClassMap[task.status]}`}>{task.status}</Badge></TableCell>
-                                            
+
                                             <TableCell className="text-right whitespace-nowrap">{formatCurrency(Number(task.initialDemand || 0), task.initialDemandCurrency)}</TableCell>
                                             <TableCell className="text-right whitespace-nowrap">{formatCurrency(Number(task.officialSettlement || 0), task.officialSettlementCurrency)}</TableCell>
                                             <TableCell className="text-right whitespace-nowrap">{formatCurrency(Number(task.motivation || 0), task.motivationCurrency)}</TableCell>
@@ -524,7 +567,7 @@ export default function FinancialsPage() {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={11} className="h-24 text-center">
-                                        No financial tasks found.
+                                            No financial tasks found.
                                         </TableCell>
                                     </TableRow>
                                 )}

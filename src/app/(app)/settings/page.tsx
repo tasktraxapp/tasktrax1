@@ -606,7 +606,9 @@ export default function SettingsPage() {
                         </AlertDialog>
 
                         <div className="overflow-x-auto">
-                            <PermissionsTable />
+                            {currentUser?.role === 'Admin' && (
+                                <PermissionsTable />
+                            )}
                         </div>
 
                     </TabsContent>
@@ -723,20 +725,6 @@ export default function SettingsPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
-                    {/* --- TAB 6: LOGIN HISTORY (ADMIN ONLY) --- */}
-                    {currentUser?.role === 'Admin' && (
-                        <TabsContent value="logins">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Login History</CardTitle>
-                                    <CardDescription>View recent system access logs.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <LoginHistoryTable />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    )}
                 </div>
             </Tabs>
         </div>

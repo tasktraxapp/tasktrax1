@@ -10,6 +10,7 @@ import { Download, Eye, MoreHorizontal, Printer, FileText, FolderArchive, FileTy
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { format, isValid, parseISO } from "date-fns";
 import { useRealtimeTasks } from "@/hooks/use-tasks";
+import { useToast } from "@/hooks/use-toast";
 
 // 🛠️ Helper to format bytes
 const formatBytes = (bytes: number, decimals = 2) => {
@@ -25,7 +26,7 @@ const formatBytes = (bytes: number, decimals = 2) => {
 const safeParseDate = (input: any): Date | undefined => {
     if (!input) return undefined;
     if (input instanceof Date) return input;
-    if (typeof input === 'object' && 'seconds' in input) return new Date(input.seconds * 1000); 
+    if (typeof input === 'object' && 'seconds' in input) return new Date(input.seconds * 1000);
     if (typeof input === 'string') {
         const d = parseISO(input);
         if (isValid(d)) return d;
@@ -50,12 +51,61 @@ const statusClassMap: { [key: string]: string | undefined } = {
 };
 
 export default function DocumentsPage() {
+    const { toast } = useToast();
     const { tasks, loading } = useRealtimeTasks();
+
+    const handleDownload = async (url: string, filename: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+            toast({ title: "Download Started", description: filename });
+        } catch (error) {
+            console.error("Download failed:", error);
+            window.open(url, '_blank');
+            toast({ title: "Download Error", description: "Opening in new tab instead.", variant: "destructive" });
+        }
+    };
+
+    const handlePrint = async (url: string, type: string) => {
+        // If it's an image or PDF, we can try to print it via iframe
+        // Types often come as 'IMAGE/PNG' or just 'PNG' or 'PDF'
+        const t = (type || '').toUpperCase();
+        if (t.includes('IMAGE') || t.includes('PDF') || t.endsWith('PNG') || t.endsWith('JPG') || t.endsWith('JPEG')) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+
+                const iframe = document.getElementById('print_frame') as HTMLIFrameElement;
+                if (iframe) {
+                    iframe.src = blobUrl;
+                    iframe.onload = () => {
+                        iframe.contentWindow?.print();
+                    };
+                } else {
+                    window.open(blobUrl, '_blank');
+                }
+            } catch (e) {
+                window.open(url, '_blank');
+            }
+        } else {
+            // For other types, just open
+            window.open(url, '_blank');
+        }
+    };
 
     const { tasksWithDocuments, totalDocuments, documentTypes, totalSizeBytes } = useMemo(() => {
         if (loading) return { tasksWithDocuments: [], totalDocuments: 0, documentTypes: {}, totalSizeBytes: 0 };
 
-        const flatDocuments = tasks.flatMap(task => 
+        const flatDocuments = tasks.flatMap(task =>
             (task.files || []).map((file: any, index: number) => {
                 let dateSource = file.uploadedAt || task.receivedDate || task.entryDate || task.createdAt || new Date();
                 return {
@@ -131,7 +181,7 @@ export default function DocumentsPage() {
                         <FileType2 className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
-                         <div className="flex flex-wrap gap-2 pt-2">
+                        <div className="flex flex-wrap gap-2 pt-2">
                             {Object.entries(documentTypes).map(([type, count]) => (
                                 <Badge key={type} variant="secondary">{`${type}: ${count}`}</Badge>
                             ))}
@@ -159,7 +209,7 @@ export default function DocumentsPage() {
                                             </Badge>
                                             <span className="font-medium truncate flex-1">{task.title}</span>
                                         </div>
-                                        
+
                                         <div className="flex w-full sm:justify-center items-center gap-3 sm:gap-0">
                                             <Badge variant={statusVariantMap[task.status]} className={statusClassMap[task.status]}>
                                                 {task.status}
@@ -168,9 +218,9 @@ export default function DocumentsPage() {
                                                 • {task.documents.length} file(s)
                                             </span>
                                         </div>
-                                        
+
                                         <div className="hidden sm:flex justify-end text-sm text-muted-foreground">
-                                           {task.documents.length} document(s)
+                                            {task.documents.length} document(s)
                                         </div>
                                     </div>
                                 </AccordionTrigger>
@@ -192,70 +242,40 @@ export default function DocumentsPage() {
                                                     const displayDate = dateObj ? format(dateObj, "dd-MM-yyyy") : "N/A";
 
                                                     return (
-                                                    <TableRow key={doc.id}>
-                                                        <TableCell className="font-medium max-w-[200px] truncate" title={doc.name}>
-                                                            {doc.name}
-                                                        </TableCell>
-                                                        <TableCell>{displayDate}</TableCell>
-                                                        <TableCell>{doc.fileType}</TableCell>
-                                                        <TableCell>{formatBytes(doc.fileSize)}</TableCell>
-                                                        <TableCell className="text-right">
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                        <MoreHorizontal className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end">
-                                                                    {/* ✅ THE FIX: Using 'asChild' with plain HTML <a> tags.
-                                                                        This bypasses JS event handling issues on mobile.
-                                                                    */}
-                                                                    
-                                                                    {/* VIEW */}
-                                                                    <DropdownMenuItem asChild>
-                                                                        <a 
-                                                                            href={doc.url} 
-                                                                            target="_blank" 
-                                                                            rel="noopener noreferrer"
-                                                                            className="w-full flex items-center cursor-pointer text-sm"
-                                                                        >
+                                                        <TableRow key={doc.id}>
+                                                            <TableCell className="font-medium max-w-[200px] truncate" title={doc.name}>
+                                                                {doc.name}
+                                                            </TableCell>
+                                                            <TableCell>{displayDate}</TableCell>
+                                                            <TableCell>{doc.fileType}</TableCell>
+                                                            <TableCell>{formatBytes(doc.fileSize)}</TableCell>
+                                                            <TableCell className="text-right">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                            <MoreHorizontal className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuItem onClick={() => window.open(doc.url, "_blank")}>
                                                                             <Eye className="mr-2 h-4 w-4" /> View
-                                                                        </a>
-                                                                    </DropdownMenuItem>
-                                                                    
-                                                                    {/* PRINT (Opens in new tab so user can use browser print) */}
-                                                                    <DropdownMenuItem asChild>
-                                                                        <a 
-                                                                            href={doc.url} 
-                                                                            target="_blank" 
-                                                                            rel="noopener noreferrer"
-                                                                            className="w-full flex items-center cursor-pointer text-sm"
-                                                                        >
+                                                                        </DropdownMenuItem>
+
+                                                                        <DropdownMenuItem onClick={() => handlePrint(doc.url, doc.fileType)}>
                                                                             <Printer className="mr-2 h-4 w-4" /> Print
-                                                                        </a>
-                                                                    </DropdownMenuItem>
+                                                                        </DropdownMenuItem>
 
-                                                                    <DropdownMenuSeparator />
+                                                                        <DropdownMenuSeparator />
 
-                                                                    {/* DOWNLOAD */}
-                                                                    <DropdownMenuItem asChild>
-                                                                        <a 
-                                                                            href={doc.url} 
-                                                                            // 'download' attribute works on same-origin or compatible browsers.
-                                                                            // Even if it fails, it opens the file, which allows saving.
-                                                                            download={doc.name} 
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="w-full flex items-center cursor-pointer text-sm"
-                                                                        >
+                                                                        <DropdownMenuItem onClick={() => handleDownload(doc.url, doc.name)}>
                                                                             <Download className="mr-2 h-4 w-4" /> Download
-                                                                        </a>
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )})}
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )
+                                                })}
                                             </TableBody>
                                         </Table>
                                     </div>
@@ -263,13 +283,16 @@ export default function DocumentsPage() {
                             </AccordionItem>
                         ))}
                     </Accordion>
-                     {tasksWithDocuments.length === 0 && (
+                    {tasksWithDocuments.length === 0 && (
                         <div className="text-center text-muted-foreground p-8">
                             No documents found.
                         </div>
                     )}
                 </CardContent>
             </Card>
+
+            {/* Hidden iframe for printing */}
+            <iframe id="print_frame" className="hidden" />
         </div>
     );
 }

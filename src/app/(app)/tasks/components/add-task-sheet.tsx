@@ -31,7 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 // Date Fns
 import {
   format, isValid, addMonths, subMonths,
-  startOfMonth, getDaysInMonth, getDay, isSameDay
+  startOfMonth, getDaysInMonth, getDay, isSameDay, isBefore, startOfDay
 } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -165,7 +165,7 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
 
   // Dates (Using the robust getValidDate)
   const [dueDate, setDueDate] = useState<Date | undefined>(isEditMode ? getValidDate(task?.dueDate) : new Date());
-  const [receivedDate, setReceivedDate] = useState<Date | undefined>(getValidDate(task?.receivedDate));
+  const [receivedDate, setReceivedDate] = useState<Date | undefined>(getValidDate(task?.receivedDate) || new Date()); // Default to today
   const [entryDate, setEntryDate] = useState<Date | undefined>(isEditMode ? getValidDate(task?.entryDate) : new Date());
 
   // Financials
@@ -190,6 +190,10 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
   const [receiver, setReceiver] = useState(task?.receiver || '');
   const [receiverLocation, setReceiverLocation] = useState(task?.receiverLocation || '');
   const [period, setPeriod] = useState(task?.period || '');
+
+  // Controlled Popover States
+  const [departmentOpen, setDepartmentOpen] = useState(false);
+  const [viewersOpen, setViewersOpen] = useState(false);
 
   // Custom Fields
   const currencies = settings?.customFields?.['Currency'] || ["USD", "EUR", "GBP", "JPY"];
@@ -275,7 +279,7 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
       setReceiverLocation('');
       setDueDate(new Date());
       setEntryDate(new Date());
-      setReceivedDate(undefined); // Default to empty for new tasks
+      setReceivedDate(new Date()); // Default to today for new tasks
       setViewers([]);
       setFiles([]);
       fetchId();
@@ -307,6 +311,12 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
     }
     if (!currentUser) {
       toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+      return;
+    }
+
+    // ✅ Validate Dates: Posted On (entryDate) cannot be before Received Date (receivedDate)
+    if (entryDate && receivedDate && isBefore(startOfDay(entryDate), startOfDay(receivedDate))) {
+      toast({ title: "Invalid Date", description: "Posted On date cannot be before Received Date.", variant: "destructive" });
       return;
     }
 
@@ -473,7 +483,7 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
             <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
               <Label className="text-left sm:text-right pt-2">Department</Label>
               <div className="col-span-1 sm:col-span-3">
-                <Popover>
+                <Popover open={departmentOpen} onOpenChange={setDepartmentOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-between font-normal h-auto min-h-[40px] py-2">
                       {department.length > 0 ? (
@@ -488,8 +498,11 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0" align="start">
-                    <div className="p-2 border-b">
+                    <div className="p-2 border-b flex items-center justify-between">
                       <p className="font-semibold text-sm">Select Departments</p>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setDepartmentOpen(false)} title="Close">
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                     {/* ✅ SCROLL FIX: Native Scroll for better UX */}
                     <div className="max-h-[300px] overflow-y-auto">
@@ -528,7 +541,7 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
             <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
               <Label className="text-left sm:text-right pt-2">Viewers</Label>
               <div className="col-span-1 sm:col-span-3">
-                <Popover>
+                <Popover open={viewersOpen} onOpenChange={setViewersOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-between font-normal h-auto min-h-[40px] py-2">
                       {viewers.length > 0
@@ -541,8 +554,24 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0" align="start">
-                    <div className="p-2 border-b">
+                    <div className="p-2 border-b flex items-center justify-between">
                       <p className="font-semibold text-sm">Select Viewers</p>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={() => {
+                            if (viewers.length === users.length) setViewers([]);
+                            else setViewers([...users]);
+                          }}
+                        >
+                          {viewers.length === users.length ? "Clear" : "Select All"}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setViewersOpen(false)} title="Close">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     {/* ✅ SCROLL FIX: Native Scroll for better UX */}
                     <div className="max-h-[300px] overflow-y-auto">

@@ -589,16 +589,22 @@ export default function TaskDetailClient({ id }: { id: string }) {
                                 </CardHeader>
                                 <CardContent className="pt-4 space-y-4 text-sm">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground">Initial Demand</span>
-                                        <span className="font-bold">{formatCurrency(task.initialDemand, task.initialDemandCurrency)}</span>
+                                        <span className="text-muted-foreground shrink-0 mr-2">Initial Demand</span>
+                                        <div className="font-bold overflow-x-auto whitespace-nowrap pb-1 text-right max-w-[60%]" title={formatCurrency(task.initialDemand, task.initialDemandCurrency)}>
+                                            {formatCurrency(task.initialDemand, task.initialDemandCurrency)}
+                                        </div>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground">Official Settlement</span>
-                                        <span className="font-bold ">{formatCurrency(task.officialSettlement, task.officialSettlementCurrency)}</span>
+                                        <span className="text-muted-foreground shrink-0 mr-2">Official Settlement</span>
+                                        <div className="font-bold overflow-x-auto whitespace-nowrap pb-1 text-right max-w-[60%]" title={formatCurrency(task.officialSettlement, task.officialSettlementCurrency)}>
+                                            {formatCurrency(task.officialSettlement, task.officialSettlementCurrency)}
+                                        </div>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground">Motivation</span>
-                                        <span className="font-bold">{formatCurrency(task.motivation, task.motivationCurrency)}</span>
+                                        <span className="text-muted-foreground shrink-0 mr-2">Motivation</span>
+                                        <div className="font-bold overflow-x-auto whitespace-nowrap pb-1 text-right max-w-[60%]" title={formatCurrency(task.motivation, task.motivationCurrency)}>
+                                            {formatCurrency(task.motivation, task.motivationCurrency)}
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
