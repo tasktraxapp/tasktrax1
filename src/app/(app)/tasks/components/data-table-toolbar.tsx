@@ -3,7 +3,7 @@
 import { type Table } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, Filter, X, Search, MoreHorizontal } from "lucide-react"
+import { Plus, Filter, X, Search, MoreHorizontal } from "lucide-react"
 import { AddTaskSheet } from "./add-task-sheet"
 import { PermissionGuard } from "@/components/permission-guard"
 import type { Task } from "@/lib/types"
@@ -375,7 +375,7 @@ export function DataTableToolbar<TData>({
                     <PermissionGuard requiredPermission="Create Tasks">
                         <AddTaskSheet>
                             <Button size="icon" className="h-9 w-9">
-                                <PlusCircle className="h-4 w-4" />
+                                <Plus className="h-4 w-4" />
                                 <span className="sr-only">Add</span>
                             </Button>
                         </AddTaskSheet>

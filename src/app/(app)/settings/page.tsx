@@ -535,9 +535,44 @@ export default function SettingsPage() {
                     {/* --- TAB 2: USERS & ROLES --- */}
                     <TabsContent value="users" className="space-y-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Users and Roles</CardTitle>
-                                <CardDescription>Manage your team members and their access levels.</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div className="space-y-1.5">
+                                    <CardTitle>Users and Roles</CardTitle>
+                                    <CardDescription>Manage your team members and their access levels.</CardDescription>
+                                </div>
+                                <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+                                    <PermissionGuard requiredPermission="Manage Users">
+                                        <DialogTrigger asChild>
+                                            <Button size="icon"><Plus className="h-4 w-4" /></Button>
+                                        </DialogTrigger>
+                                    </PermissionGuard>
+                                    <DialogContent className="sm:max-w-md w-[95%] rounded-lg">
+                                        <DialogHeader><DialogTitle>Invite New User</DialogTitle></DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2"><Label>Full Name</Label><Input value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} /></div>
+                                            <div className="grid gap-2"><Label>Email</Label><Input value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} /></div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div className="grid gap-2">
+                                                    <Label>Department</Label>
+                                                    <Select value={newUser.department} onValueChange={(val) => setNewUser({ ...newUser, department: val })}>
+                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label>Role</Label>
+                                                    <Select value={newUser.role} onValueChange={(val) => setNewUser({ ...newUser, role: val })}>
+                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                        <SelectContent><SelectItem value="Admin">Admin</SelectItem><SelectItem value="Manager">Manager</SelectItem><SelectItem value="Member">Member</SelectItem></SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <DialogFooter><Button onClick={handleInviteUser} disabled={isAddingUser} className="w-full sm:w-auto">Add User</Button></DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                             </CardHeader>
                             <CardContent className="p-0 sm:p-6">
                                 <div className="overflow-x-auto">
@@ -609,39 +644,7 @@ export default function SettingsPage() {
                                     </Table>
                                 </div>
                             </CardContent>
-                            <CardFooter className="border-t px-6 py-4 bg-muted/50">
-                                <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-                                    <PermissionGuard requiredPermission="Manage Users">
-                                        <DialogTrigger asChild><Button className="w-full sm:w-auto"><UserPlus className="mr-2 h-4 w-4" /> Invite New User</Button></DialogTrigger>
-                                    </PermissionGuard>
-                                    <DialogContent className="sm:max-w-md w-[95%] rounded-lg">
-                                        <DialogHeader><DialogTitle>Invite New User</DialogTitle></DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid gap-2"><Label>Full Name</Label><Input value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} /></div>
-                                            <div className="grid gap-2"><Label>Email</Label><Input value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} /></div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label>Department</Label>
-                                                    <Select value={newUser.department} onValueChange={(val) => setNewUser({ ...newUser, department: val })}>
-                                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                                        <SelectContent>
-                                                            {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label>Role</Label>
-                                                    <Select value={newUser.role} onValueChange={(val) => setNewUser({ ...newUser, role: val })}>
-                                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                                        <SelectContent><SelectItem value="Admin">Admin</SelectItem><SelectItem value="Manager">Manager</SelectItem><SelectItem value="Member">Member</SelectItem></SelectContent>
-                                                    </Select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <DialogFooter><Button onClick={handleInviteUser} disabled={isAddingUser} className="w-full sm:w-auto">Add User</Button></DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            </CardFooter>
+
                         </Card>
 
                         {/* EDIT DIALOG */}
