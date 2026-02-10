@@ -204,6 +204,7 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
   const locationOptions = settings?.customFields?.['Location'] || [];
   const senderLocOptions = settings?.customFields?.['Sender Location'] || locationOptions;
   const receiverLocOptions = settings?.customFields?.['Receiver Location'] || locationOptions;
+  const receiverOptions = settings?.customFields?.['Receiver'] || [];
 
   // Realtime Users
   useEffect(() => {
@@ -620,7 +621,20 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Receiver Name</Label>
-                <Input placeholder="Who receives this?" value={receiver} onChange={e => setReceiver(e.target.value)} />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Select value={receiver} onValueChange={setReceiver}>
+                      <SelectTrigger><SelectValue placeholder="Select Receiver" /></SelectTrigger>
+                      <SelectContent>
+                        {receiverOptions.length > 0 ? (
+                          receiverOptions.map((r: string) => <SelectItem key={r} value={r}>{r}</SelectItem>)
+                        ) : (
+                          <SelectItem value="none" disabled>Add 'Receiver' in Settings</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label>Receiver Location</Label>

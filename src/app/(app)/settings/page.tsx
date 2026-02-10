@@ -88,7 +88,7 @@ export default function SettingsPage() {
     } = useAppSettings();
 
     const customFields = settings?.customFields || {};
-    const defaultKeys = ["Priority", "Status", "Label", "Department", "Currency", "Sender Location", "Receiver Location"];
+    const defaultKeys = ["Priority", "Status", "Label", "Department", "Currency", "Sender Location", "Receiver", "Receiver Location"];
     const fieldNames = Array.from(new Set([...defaultKeys, ...Object.keys(customFields)]));
 
     const departmentOptions = customFields["Department"] || [];
