@@ -30,6 +30,8 @@ import type { Task, FinancialSummary } from '@/lib/types';
 // Import Real-Time Hook
 import { useRealtimeTasks } from "@/hooks/use-tasks";
 import { generateFinancialsWordDoc } from '@/lib/export-utils';
+import { usePermissions } from "@/hooks/use-permissions";
+import { useRouter } from "next/navigation"; // Ensure correct import
 
 const initialSummary: FinancialSummary = {
     USD: { totalInitialDemand: 0, totalOfficialPayment: 0, totalMotivation: 0, grandTotal: 0 }
@@ -37,6 +39,15 @@ const initialSummary: FinancialSummary = {
 
 export default function FinancialsPage() {
     const { tasks, loading } = useRealtimeTasks();
+    const { can, loading: permissionsLoading } = usePermissions();
+    const router = useRouter();
+
+    // ✅ SECURE ROUTE: Redirect if no permission (Wait for loading)
+    useEffect(() => {
+        if (!permissionsLoading && !can("View Financials")) {
+            router.push("/dashboard");
+        }
+    }, [can, permissionsLoading, router]);
 
     // Memoize financial tasks
     const financialTasks = useMemo(() => {

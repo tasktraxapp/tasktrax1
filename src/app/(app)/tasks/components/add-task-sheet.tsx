@@ -692,27 +692,27 @@ export function AddTaskSheet({ children, task, open, onOpenChange }: { children?
           </div>
 
           {/* 7. FINANCIALS */}
-          <PermissionGuard requiredPermission="View Financials">
-            <div className="grid grid-cols-1 gap-4 rounded-lg border p-4 bg-muted/10">
-              <h3 className="text-base font-semibold flex items-center gap-2">Financials</h3>
+          <div className="grid grid-cols-1 gap-4 rounded-lg border p-4 bg-muted/10">
+            <h3 className="text-base font-semibold flex items-center gap-2">Financials</h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="grid grid-cols-[1fr_100px] gap-2">
-                  <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Initial Demand</Label><Input type="number" placeholder="0.00" value={initialDemand} onChange={e => setInitialDemand(e.target.value)} className="font-mono" /></div>
-                  <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Currency</Label><Select value={initialDemandCurrency} onValueChange={setInitialDemandCurrency}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-                </div>
-                <div className="grid grid-cols-[1fr_100px] gap-2">
-                  <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Official Settlement</Label><Input type="number" placeholder="0.00" value={officialSettlement} onChange={e => setOfficialSettlement(e.target.value)} className="font-mono" /></div>
-                  <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Currency</Label><Select value={officialSettlementCurrency} onValueChange={setOfficialSettlementCurrency}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-[1fr_100px] gap-2">
+                <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Initial Demand</Label><Input type="number" placeholder="0.00" value={initialDemand} onChange={e => setInitialDemand(e.target.value)} className="font-mono" /></div>
+                <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Currency</Label><Select value={initialDemandCurrency} onValueChange={setInitialDemandCurrency}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
               </div>
+              <div className="grid grid-cols-[1fr_100px] gap-2">
+                <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Official Settlement</Label><Input type="number" placeholder="0.00" value={officialSettlement} onChange={e => setOfficialSettlement(e.target.value)} className="font-mono" /></div>
+                <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Currency</Label><Select value={officialSettlementCurrency} onValueChange={setOfficialSettlementCurrency}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+              </div>
+            </div>
 
+            <PermissionGuard requiredPermission="View Financials">
               <div className="grid grid-cols-[1fr_100px] gap-2">
                 <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Motivation</Label><Input type="number" placeholder="0.00" value={motivation} onChange={e => setMotivation(e.target.value)} className="font-mono text-black dark:text-white font-medium" /></div>
                 <div className="grid gap-1.5"><Label className="text-xs text-muted-foreground">Currency</Label><Select value={motivationCurrency} onValueChange={setMotivationCurrency}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
               </div>
-            </div>
-          </PermissionGuard>
+            </PermissionGuard>
+          </div>
 
           {/* 8. FILES */}
           <div className="grid grid-cols-1 gap-2">

@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"; 
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useState, useEffect, useCallback } from "react";
 import { Menu, LayoutDashboard, CheckSquare, FileText, Settings, CreditCard, LogOut } from "lucide-react";
-import { Logo } from "@/components/logo"; 
+import { Logo } from "@/components/logo";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -46,9 +46,9 @@ function SidebarContent({ onNavClick }: SidebarContentProps) {
             {/* Logo Area */}
             <div className="p-6 pb-2 flex justify-start">
                 <Link href="/dashboard" onClick={onNavClick}>
-                    <Logo 
-                        urlOverride="/logo-dark.png" 
-                        iconClassName="h-12 w-auto" 
+                    <Logo
+                        urlOverride="/logo-dark.png"
+                        iconClassName="h-12 w-auto"
                         className="justify-start cursor-pointer"
                     />
                 </Link>
@@ -60,19 +60,19 @@ function SidebarContent({ onNavClick }: SidebarContentProps) {
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                        
+
                         return (
-                            <Link 
-                                key={item.href} 
-                                href={item.href} 
+                            <Link
+                                key={item.href}
+                                href={item.href}
                                 // ✅ FORCE CLOSE: Explicitly calling the prop function
                                 onClick={() => {
                                     if (onNavClick) onNavClick();
                                 }}
                                 className={cn(
                                     "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
-                                    isActive 
-                                        ? "bg-blue-600 text-white shadow-md" 
+                                    isActive
+                                        ? "bg-blue-600 text-white shadow-md"
                                         : "hover:bg-slate-800 hover:text-white"
                                 )}
                             >
@@ -86,8 +86,8 @@ function SidebarContent({ onNavClick }: SidebarContentProps) {
 
             {/* Footer / Logout */}
             <div className="p-4 border-t border-slate-800">
-                <Button 
-                    variant="ghost" 
+                <Button
+                    variant="ghost"
                     className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-950/30 gap-3"
                     onClick={handleLogout}
                 >
@@ -131,9 +131,9 @@ export function MobileSidebar() {
                     <span className="sr-only">Toggle Menu</span>
                 </Button>
             </SheetTrigger>
-            
+
             <SheetContent side="left" className="p-0 w-72 bg-slate-900 border-r-slate-800 text-slate-100 flex flex-col">
-                
+
                 {/* ✅ FIX: Visually Hidden Title for Accessibility Compliance */}
                 <SheetHeader className="sr-only">
                     <SheetTitle>Navigation Menu</SheetTitle>

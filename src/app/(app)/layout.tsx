@@ -120,7 +120,7 @@ export default function AppLayout({
     const navLinks: { href: string; icon: any; label: string; permission: PermissionAction | null }[] = [
         { href: '/dashboard', icon: Home, label: 'Dashboard', permission: null },
         { href: '/tasks', icon: ClipboardList, label: 'Tasks', permission: 'View Tasks' },
-        { href: '/financials', icon: Wallet, label: 'Financials', permission: 'View Tasks' },
+        { href: '/financials', icon: Wallet, label: 'Financials', permission: 'View Financials' },
         { href: '/documents', icon: FileText, label: 'Documents', permission: 'View Tasks' },
     ];
 
